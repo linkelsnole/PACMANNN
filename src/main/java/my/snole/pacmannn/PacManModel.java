@@ -36,6 +36,10 @@ public class PacManModel {
     private Point2D ghost2Velocity;
     private static Direction lastDirection;
     private static Direction currentDirection;
+    private Point2D botPacmanLocation;//добавил
+    private Point2D botPacmanVelocity;
+
+
 
     /**
      * Start a new game upon initializion
@@ -83,6 +87,10 @@ public class PacManModel {
         int ghost1Column = 0;
         int ghost2Row = 0;
         int ghost2Column = 0;
+
+        int botPacmanRow = 0;
+        int botPacmanColumn = 0;
+
         while(scanner2.hasNextLine()){
             int column = 0;
             String line= scanner2.nextLine();
@@ -116,6 +124,11 @@ public class PacManModel {
                     pacmanRow = row;
                     pacmanColumn = column;
                 }
+                else if (value.equals("Q")) { // Предположим, что Q обозначает стартовую позицию для второго Пакмана
+                    thisValue = CellValue.PACMANHOME;
+                    botPacmanRow = row;
+                    botPacmanColumn = column;
+                }
                 else //(value.equals("E"))
                 {
                     thisValue = CellValue.EMPTY;
@@ -131,7 +144,11 @@ public class PacManModel {
         ghost1Velocity = new Point2D(-1, 0);
         ghost2Location = new Point2D(ghost2Row,ghost2Column);
         ghost2Velocity = new Point2D(-1, 0);
+
+        botPacmanLocation = new Point2D(botPacmanRow, botPacmanColumn);//добавил
+        botPacmanVelocity = new Point2D(0,0);
         currentDirection = Direction.NONE;
+
         lastDirection = Direction.NONE;
     }
 
@@ -175,6 +192,7 @@ public class PacManModel {
      * Move PacMan based on the direction indicated by the user (based on keyboard input from the Controller)
      * @param direction the most recently inputted direction for PacMan to move in
      */
+    private static final double MOVE_STEP = 0.1;
     public void movePacman(Direction direction) {
         Point2D potentialPacmanVelocity = changeVelocity(direction);
         Point2D potentialPacmanLocation = pacmanLocation.add(potentialPacmanVelocity);
@@ -217,6 +235,76 @@ public class PacManModel {
             }
         }
     }
+
+    private Point2D findClosestFood(Point2D start) {
+        boolean[][] visited = new boolean[rowCount][columnCount];
+        Queue<Point2D> queue = new LinkedList<>();
+        queue.add(start);
+        visited[(int) start.getX()][(int) start.getY()] = true;
+
+        while (!queue.isEmpty()) {
+            Point2D current = queue.poll();
+            for (Point2D dir : new Point2D[]{new Point2D(-1, 0), new Point2D(1, 0), new Point2D(0, -1), new Point2D(0, 1)}) {
+                Point2D neighbor = current.add(dir);
+                if (neighbor.getX() >= 0 && neighbor.getX() < rowCount && neighbor.getY() >= 0 && neighbor.getY() < columnCount) {
+                    if (!visited[(int) neighbor.getX()][(int) neighbor.getY()]) {
+                        visited[(int) neighbor.getX()][(int) neighbor.getY()] = true;
+                        if (grid[(int) neighbor.getX()][(int) neighbor.getY()] == CellValue.SMALLDOT ||
+                                grid[(int) neighbor.getX()][(int) neighbor.getY()] == CellValue.BIGDOT) {
+                            return neighbor;
+                        }
+                        queue.add(neighbor);
+                    }
+                }
+            }
+        }
+        return null; // Если еды не найдено
+    }
+
+
+
+    //реализовать
+    public void moveBotPacman() {
+        Point2D closestFood = findClosestFood(botPacmanLocation);
+        if (closestFood != null) {
+            Queue<Point2D> queue = new LinkedList<>();
+            Map<Point2D, Point2D> cameFrom = new HashMap<>();
+            queue.add(botPacmanLocation);
+            cameFrom.put(botPacmanLocation, null);
+
+            while (!queue.isEmpty()) {
+                Point2D current = queue.poll();
+
+                if (current.equals(closestFood)) {
+                    break;
+                }
+
+                for (Point2D dir : new Point2D[]{new Point2D(-1, 0), new Point2D(1, 0), new Point2D(0, -1), new Point2D(0, 1)}) {
+                    Point2D neighbor = current.add(dir);
+                    neighbor = setGoingOffscreenNewLocation(neighbor);
+
+                    if (!cameFrom.containsKey(neighbor) && neighbor.getX() >= 0 && neighbor.getX() < rowCount && neighbor.getY() >= 0 && neighbor.getY() < columnCount && grid[(int) neighbor.getX()][(int) neighbor.getY()] != CellValue.WALL) {
+                        queue.add(neighbor);
+                        cameFrom.put(neighbor, current);
+                    }
+                }
+            }
+
+            Point2D nextStep = closestFood;
+            while (cameFrom.get(nextStep) != null && !cameFrom.get(nextStep).equals(botPacmanLocation)) {
+                nextStep = cameFrom.get(nextStep);
+            }
+
+            botPacmanVelocity = nextStep.subtract(botPacmanLocation);
+            botPacmanLocation = nextStep;
+        } else {
+            botPacmanVelocity = new Point2D(0, 0); // Остановка бота, если нет еды
+        }
+        botPacmanLocation = setGoingOffscreenNewLocation(botPacmanLocation);
+    }
+
+
+
 
     /**
      * Move ghosts to follow PacMan as established in moveAGhost() method
@@ -417,14 +505,15 @@ public class PacManModel {
      */
     public void step(Direction direction) {
         this.movePacman(direction);
-        //if PacMan is on a small dot, delete small dot
+        this.moveBotPacman(); // Двигаем бота на каждом кадре
+
+        // Если Пакман находит еду
         CellValue pacmanLocationCellValue = grid[(int) pacmanLocation.getX()][(int) pacmanLocation.getY()];
         if (pacmanLocationCellValue == CellValue.SMALLDOT) {
             grid[(int) pacmanLocation.getX()][(int) pacmanLocation.getY()] = CellValue.EMPTY;
             dotCount--;
             score += 10;
         }
-        //if PacMan is on a big dot, delete big dot and change game state to ghost-eating mode and initialize the counter
         if (pacmanLocationCellValue == CellValue.BIGDOT) {
             grid[(int) pacmanLocation.getX()][(int) pacmanLocation.getY()] = CellValue.EMPTY;
             dotCount--;
@@ -432,7 +521,23 @@ public class PacManModel {
             ghostEatingMode = true;
             Controller.setGhostEatingModeCounter();
         }
-        //send ghost back to ghosthome if PacMan is on a ghost in ghost-eating mode
+
+        // Если бот Пакман находит еду
+        CellValue botPacmanLocationCellValue = grid[(int) botPacmanLocation.getX()][(int) botPacmanLocation.getY()];
+        if (botPacmanLocationCellValue == CellValue.SMALLDOT) {
+            grid[(int) botPacmanLocation.getX()][(int) botPacmanLocation.getY()] = CellValue.EMPTY;
+            dotCount--;
+            score += 10;
+        }
+        if (botPacmanLocationCellValue == CellValue.BIGDOT) {
+            grid[(int) botPacmanLocation.getX()][(int) botPacmanLocation.getY()] = CellValue.EMPTY;
+            dotCount--;
+            score += 50;
+            ghostEatingMode = true;
+            Controller.setGhostEatingModeCounter();
+        }
+
+        // Если Пакман в режиме поедания призраков
         if (ghostEatingMode) {
             if (pacmanLocation.equals(ghost1Location)) {
                 sendGhost1Home();
@@ -442,19 +547,14 @@ public class PacManModel {
                 sendGhost2Home();
                 score += 100;
             }
-        }
-        //game over if PacMan is eaten by a ghost
-        else {
-            if (pacmanLocation.equals(ghost1Location)) {
+        } else {
+            if (pacmanLocation.equals(ghost1Location) || pacmanLocation.equals(ghost2Location)) {
                 gameOver = true;
-                pacmanVelocity = new Point2D(0,0);
-            }
-            if (pacmanLocation.equals(ghost2Location)) {
-                gameOver = true;
-                pacmanVelocity = new Point2D(0,0);
+                pacmanVelocity = new Point2D(0, 0);
             }
         }
-        //move ghosts and checks again if ghosts or PacMan are eaten (repeating these checks helps account for even/odd numbers of squares between ghosts and PacMan)
+
+        // Двигаем призраков
         this.moveGhosts();
         if (ghostEatingMode) {
             if (pacmanLocation.equals(ghost1Location)) {
@@ -465,23 +565,20 @@ public class PacManModel {
                 sendGhost2Home();
                 score += 100;
             }
-        }
-        else {
-            if (pacmanLocation.equals(ghost1Location)) {
+        } else {
+            if (pacmanLocation.equals(ghost1Location) || pacmanLocation.equals(ghost2Location)) {
                 gameOver = true;
-                pacmanVelocity = new Point2D(0,0);
-            }
-            if (pacmanLocation.equals(ghost2Location)) {
-                gameOver = true;
-                pacmanVelocity = new Point2D(0,0);
+                pacmanVelocity = new Point2D(0, 0);
             }
         }
-        //start a new level if level is complete
+
+        // Если уровень завершен
         if (this.isLevelComplete()) {
-            pacmanVelocity = new Point2D(0,0);
+            pacmanVelocity = new Point2D(0, 0);
             startNextLevel();
         }
     }
+
 
     /**
      * Connects each direction to Point2D velocity vectors (Left = (-1,0), Right = (1,0), Up = (0,-1), Down = (0,1))
@@ -657,5 +754,22 @@ public class PacManModel {
 
     public void setGhost2Velocity(Point2D ghost2Velocity) {
         this.ghost2Velocity = ghost2Velocity;
+    }
+
+
+    public Point2D getBotPacmanLocation() {
+        return botPacmanLocation;
+    }
+
+    public void setBotPacmanLocation(Point2D botPacmanLocation) {
+        this.botPacmanLocation = botPacmanLocation;
+    }
+
+    public Point2D getBotPacmanVelocity() {
+        return botPacmanVelocity;
+    }
+
+    public void setBotPacmanVelocity(Point2D botPacmanVelocity) {
+        this.botPacmanVelocity = botPacmanVelocity;
     }
 }

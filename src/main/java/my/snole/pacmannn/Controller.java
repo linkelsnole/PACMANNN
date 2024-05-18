@@ -10,16 +10,21 @@ import javafx.scene.control.Label;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.application.Platform;
+import javafx.scene.layout.BorderPane;
+
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class Controller implements EventHandler<KeyEvent> {
     final private static double FRAMES_PER_SECOND = 5.0;
-
     @FXML private Label scoreLabel;
     @FXML private Label levelLabel;
     @FXML private Label gameOverLabel;
-    @FXML private PacManView pacManView;
+    @FXML private BorderPane borderPane;
+    @FXML private Label timerLabel;
+    private static final int MOVE_INTERVAL = 6;
+    private GameTimer gameTimer;
+    private PacManView pacManView;
     private PacManModel pacManModel;
     private static final String[] levelFiles = {
             "level1.txt",
@@ -40,7 +45,12 @@ public class Controller implements EventHandler<KeyEvent> {
      */
     public void initialize() {
         String file = this.getLevelFile(0);
+        gameTimer = new GameTimer(timerLabel);
         this.pacManModel = new PacManModel();
+        this.pacManView = new PacManView(); // создаем PacManView
+        this.pacManView.setRowCount(pacManModel.getRowCount());
+        this.pacManView.setColumnCount(pacManModel.getColumnCount());
+        this.borderPane.setCenter(this.pacManView); // добавляем PacManView в центр BorderPane
         this.update(PacManModel.Direction.NONE);
         ghostEatingModeCounter = 25;
         this.startTimer();
@@ -154,4 +164,18 @@ public class Controller implements EventHandler<KeyEvent> {
     public boolean getPaused() {
         return paused;
     }
+
+
+    @FXML
+    private void handleStartButtonAction() {
+        gameTimer.start();
+        borderPane.requestFocus();
+    }
+
+    @FXML
+    private void handleStopButtonAction() {
+        gameTimer.reset();
+        borderPane.requestFocus();
+    }
+
 }

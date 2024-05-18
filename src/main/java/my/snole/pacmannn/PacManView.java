@@ -27,6 +27,7 @@ public class PacManView extends Group {
     private Image wallImage;
     private Image bigDotImage;
     private Image smallDotImage;
+    private Image botPacmanImage;
 
     /**
      * Initializes the values of the image instance variables from files
@@ -42,6 +43,7 @@ public class PacManView extends Group {
         this.wallImage = new Image(getClass().getResourceAsStream("/image/wall.png"));
         this.bigDotImage = new Image(getClass().getResourceAsStream("/image/whitedot.png"));
         this.smallDotImage = new Image(getClass().getResourceAsStream("/image/smalldot.png"));
+        this.botPacmanImage = new Image(getClass().getResourceAsStream("/image/pacmanUp.gif"));
     }
 
     /**
@@ -86,6 +88,7 @@ public class PacManView extends Group {
                 else {
                     this.cellViews[row][column].setImage(null);
                 }
+
                 //check which direction PacMan is going in and display the corresponding image
                 if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY() && (PacManModel.getLastDirection() == PacManModel.Direction.RIGHT || PacManModel.getLastDirection() == PacManModel.Direction.NONE)) {
                     this.cellViews[row][column].setImage(this.pacmanRightImage);
@@ -108,6 +111,12 @@ public class PacManView extends Group {
                         this.cellViews[row][column].setImage(this.ghost2Image);
                     }
                 }
+
+                //БОТ ПАКМАН
+                if (row == model.getBotPacmanLocation().getX() && column == model.getBotPacmanLocation().getY()) {
+                    this.cellViews[row][column].setImage(this.botPacmanImage);
+                }
+
                 //display blue ghosts in ghostEatingMode
                 else if (PacManModel.isGhostEatingMode()) {
                     if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
