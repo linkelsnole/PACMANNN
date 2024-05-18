@@ -1,8 +1,3 @@
-/**
- * Encorporates the various Views of the application that reference different parts of the Model, including the main
- * game board, the score label, the level label, and the Game Over label.
- */
-
 package my.snole.pacmannn;
 
 import javafx.fxml.FXML;
@@ -72,6 +67,13 @@ public class PacManView extends Group {
      */
     public void update(PacManModel model) {
         assert model.getRowCount() == this.rowCount && model.getColumnCount() == this.columnCount;
+        // Clear all cells before updating
+        for (int row = 0; row < this.rowCount; row++) {
+            for (int column = 0; column < this.columnCount; column++) {
+                this.cellViews[row][column].setImage(null);
+            }
+        }
+
         //for each ImageView, set the image to correspond with the CellValue of that cell
         for (int row = 0; row < this.rowCount; row++){
             for (int column = 0; column < this.columnCount; column++){
@@ -85,25 +87,24 @@ public class PacManView extends Group {
                 else if (value == CellValue.SMALLDOT) {
                     this.cellViews[row][column].setImage(this.smallDotImage);
                 }
-                else {
-                    this.cellViews[row][column].setImage(null);
-                }
 
                 //check which direction PacMan is going in and display the corresponding image
-                if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY() && (PacManModel.getLastDirection() == PacManModel.Direction.RIGHT || PacManModel.getLastDirection() == PacManModel.Direction.NONE)) {
-                    this.cellViews[row][column].setImage(this.pacmanRightImage);
+                if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY()) {
+                    System.out.println("PacMan location: " + model.getPacmanLocation());
+                    System.out.println("PacMan direction: " + PacManModel.getLastDirection());
+                    if (PacManModel.getLastDirection() == PacManModel.Direction.RIGHT || PacManModel.getLastDirection() == PacManModel.Direction.NONE) {
+                        this.cellViews[row][column].setImage(this.pacmanRightImage);
+                    } else if (PacManModel.getLastDirection() == PacManModel.Direction.LEFT) {
+                        this.cellViews[row][column].setImage(this.pacmanLeftImage);
+                    } else if (PacManModel.getLastDirection() == PacManModel.Direction.UP) {
+                        this.cellViews[row][column].setImage(this.pacmanUpImage);
+                    } else if (PacManModel.getLastDirection() == PacManModel.Direction.DOWN) {
+                        this.cellViews[row][column].setImage(this.pacmanDownImage);
+                    }
                 }
-                else if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY() && PacManModel.getLastDirection() == PacManModel.Direction.LEFT) {
-                    this.cellViews[row][column].setImage(this.pacmanLeftImage);
-                }
-                else if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY() && PacManModel.getLastDirection() == PacManModel.Direction.UP) {
-                    this.cellViews[row][column].setImage(this.pacmanUpImage);
-                }
-                else if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY() && PacManModel.getLastDirection() == PacManModel.Direction.DOWN) {
-                    this.cellViews[row][column].setImage(this.pacmanDownImage);
-                }
+
                 //make ghosts "blink" towards the end of ghostEatingMode (display regular ghost images on alternating updates of the counter)
-                if (PacManModel.isGhostEatingMode() && (Controller.getGhostEatingModeCounter() == 6 ||Controller.getGhostEatingModeCounter() == 4 || Controller.getGhostEatingModeCounter() == 2)) {
+                if (PacManModel.isGhostEatingMode() && (Controller.getGhostEatingModeCounter() == 6 || Controller.getGhostEatingModeCounter() == 4 || Controller.getGhostEatingModeCounter() == 2)) {
                     if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
                         this.cellViews[row][column].setImage(this.ghost1Image);
                     }
@@ -126,7 +127,7 @@ public class PacManView extends Group {
                         this.cellViews[row][column].setImage(this.blueGhostImage);
                     }
                 }
-                //dispaly regular ghost images otherwise
+                //display regular ghost images otherwise
                 else {
                     if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
                         this.cellViews[row][column].setImage(this.ghost1Image);
