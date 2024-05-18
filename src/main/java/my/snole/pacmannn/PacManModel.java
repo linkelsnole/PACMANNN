@@ -337,5 +337,8 @@ public class PacManModel {
         return botPacMen.get(0).getLocation(); // Если у вас есть несколько ботов, нужно будет изменить реализацию
     }
 
+    public BotPacMan getBotPacMan() {
+        return botPacMen.get(0); // Если у вас несколько ботов, измените реализацию
+    }
 
 }

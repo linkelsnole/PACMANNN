@@ -4,8 +4,11 @@ import javafx.geometry.Point2D;
 import java.util.*;
 
 public class BotPacMan extends PacMan {
+    private PacManModel.Direction lastDirection;
+
     public BotPacMan(Point2D location, Point2D velocity) {
         super(location, velocity);
+        this.lastDirection = PacManModel.Direction.NONE;
     }
 
     @Override
@@ -41,10 +44,25 @@ public class BotPacMan extends PacMan {
 
             this.velocity = nextStep.subtract(location);
             this.location = nextStep;
+
+            // Устанавливаем последнее направление
+            if (velocity.getX() == 1) {
+                this.lastDirection = PacManModel.Direction.DOWN;
+            } else if (velocity.getX() == -1) {
+                this.lastDirection = PacManModel.Direction.UP;
+            } else if (velocity.getY() == 1) {
+                this.lastDirection = PacManModel.Direction.RIGHT;
+            } else if (velocity.getY() == -1) {
+                this.lastDirection = PacManModel.Direction.LEFT;
+            }
         } else {
             this.velocity = new Point2D(0, 0);
         }
         this.location = setGoingOffscreenNewLocation(this.location, grid.length, grid[0].length);
+    }
+
+    public PacManModel.Direction getLastDirection() {
+        return lastDirection;
     }
 
     private Point2D findClosestFood(Point2D start, PacManModel.CellValue[][] grid) {

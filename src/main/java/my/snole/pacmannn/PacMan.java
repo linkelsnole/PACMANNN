@@ -16,6 +16,7 @@ public class PacMan extends GameCharacter {
         if (direction == null) {
             direction = PacManModel.Direction.NONE;
         }
+
         Point2D potentialVelocity = changeVelocity(direction);
         Point2D potentialLocation = location.add(potentialVelocity);
         potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
@@ -23,7 +24,19 @@ public class PacMan extends GameCharacter {
         if (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] != PacManModel.CellValue.WALL) {
             this.velocity = potentialVelocity;
             this.location = potentialLocation;
-            PacManModel.setLastDirection(direction);
+            PacManModel.setLastDirection(direction); // Установить последнее направление
+        } else {
+            // Проверяем возможность движения в текущем направлении
+            Point2D currentVelocity = changeVelocity(PacManModel.getLastDirection());
+            Point2D currentLocation = location.add(currentVelocity);
+            currentLocation = setGoingOffscreenNewLocation(currentLocation, grid.length, grid[0].length);
+
+            if (grid[(int) currentLocation.getX()][(int) currentLocation.getY()] != PacManModel.CellValue.WALL) {
+                this.velocity = currentVelocity;
+                this.location = currentLocation;
+            } else {
+                this.velocity = new Point2D(0, 0); // Если ни новое направление, ни текущее направление не работают, остановка
+            }
         }
     }
 

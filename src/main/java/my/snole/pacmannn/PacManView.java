@@ -115,7 +115,16 @@ public class PacManView extends Group {
 
                 //БОТ ПАКМАН
                 if (row == model.getBotPacmanLocation().getX() && column == model.getBotPacmanLocation().getY()) {
-                    this.cellViews[row][column].setImage(this.botPacmanImage);
+                    BotPacMan botPacMan = model.getBotPacMan(); // Предполагаем, что этот метод существует в модели
+                    if (botPacMan.getLastDirection() == PacManModel.Direction.RIGHT || botPacMan.getLastDirection() == PacManModel.Direction.NONE) {
+                        this.cellViews[row][column].setImage(this.pacmanRightImage);
+                    } else if (botPacMan.getLastDirection() == PacManModel.Direction.LEFT) {
+                        this.cellViews[row][column].setImage(this.pacmanLeftImage);
+                    } else if (botPacMan.getLastDirection() == PacManModel.Direction.UP) {
+                        this.cellViews[row][column].setImage(this.pacmanUpImage);
+                    } else if (botPacMan.getLastDirection() == PacManModel.Direction.DOWN) {
+                        this.cellViews[row][column].setImage(this.pacmanDownImage);
+                    }
                 }
 
                 //display blue ghosts in ghostEatingMode
