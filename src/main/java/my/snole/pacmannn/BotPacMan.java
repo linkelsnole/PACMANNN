@@ -6,23 +6,25 @@ import java.util.*;
 
 public class BotPacMan extends PacMan {
     private PacManModel.Direction lastDirection;
+    private static final double AVOID_GHOST_RADIUS = 3.0;
 
     public BotPacMan(Point2D location, Point2D velocity) {
         super(location, velocity);
         this.lastDirection = PacManModel.Direction.NONE;
     }
 
-    public void move(PacManModel.CellValue[][] grid, List<Ghost> ghosts) {
+    public void move(PacManModel.CellValue[][] grid, List<Ghost> ghosts, List<BotPacMan> bots) {
         Point2D closestFood = findClosestFood(location, grid);
 
-        if (isGhostNearby(location, ghosts, 3.0)) { // радиус избегания приведений
+        if (isGhostNearby(location, ghosts, AVOID_GHOST_RADIUS)) {
             // Логика избегания приведений
-            moveAwayFromGhosts(grid, ghosts);
+            moveAwayFromGhosts(grid, ghosts, bots);
         } else if (closestFood != null) {
-            // Прежняя логика для поиска еды
-            moveTowardsFood(grid, closestFood);
+            // Логика для поиска пути к еде с избеганием приведений
+            moveTowardsFoodWithAStar(grid, closestFood, ghosts, bots);
         } else {
-            this.velocity = new Point2D(0, 0);
+            // Случайное движение в направлении еды, если нет ближайшей еды или путь заблокирован
+            moveRandomly(grid, bots);
         }
 
         this.location = setGoingOffscreenNewLocation(this.location, grid.length, grid[0].length);
@@ -37,8 +39,30 @@ public class BotPacMan extends PacMan {
         return false;
     }
 
-    private void moveAwayFromGhosts(PacManModel.CellValue[][] grid, List<Ghost> ghosts) {
-        // Находим направление, противоположное самому близкому приведению
+    private void moveAwayFromGhosts(PacManModel.CellValue[][] grid, List<Ghost> ghosts, List<BotPacMan> bots) {
+        Point2D oppositeDirection = calculateOppositeDirection(ghosts);
+
+        List<Point2D> possibleDirections = Arrays.asList(
+                new Point2D(Math.signum(oppositeDirection.getX()), 0),
+                new Point2D(0, Math.signum(oppositeDirection.getY())),
+                new Point2D(Math.signum(oppositeDirection.getX()), Math.signum(oppositeDirection.getY())),
+                new Point2D(-Math.signum(oppositeDirection.getX()), 0),
+                new Point2D(0, -Math.signum(oppositeDirection.getY()))
+        );
+
+        // Перебираем возможные направления, чтобы найти доступный путь
+        for (Point2D direction : possibleDirections) {
+            if (isValidMove(location.add(direction), grid, bots)) {
+                moveInDirection(grid, direction, bots);
+                return;
+            }
+        }
+
+        // Если нет допустимых направлений, ищем случайное направление
+        moveRandomly(grid, bots);
+    }
+
+    private Point2D calculateOppositeDirection(List<Ghost> ghosts) {
         Point2D oppositeDirection = new Point2D(0, 0);
         double minDistance = Double.MAX_VALUE;
 
@@ -51,67 +75,110 @@ public class BotPacMan extends PacMan {
         }
 
         // Нормализуем направление
-        Point2D normalizedDirection = new Point2D(
+        return new Point2D(
                 oppositeDirection.getX() / minDistance,
                 oppositeDirection.getY() / minDistance
         );
+    }
 
-        Point2D potentialVelocity = new Point2D(
-                Math.signum(normalizedDirection.getX()),
-                Math.signum(normalizedDirection.getY())
-        );
-
-        Point2D potentialLocation = location.add(potentialVelocity);
+    private void moveInDirection(PacManModel.CellValue[][] grid, Point2D direction, List<BotPacMan> bots) {
+        Point2D potentialLocation = location.add(direction);
         potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
-        if (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] != PacManModel.CellValue.WALL) {
-            this.velocity = potentialVelocity;
+        if (isValidMove(potentialLocation, grid, bots)) {
+            this.velocity = direction;
             this.location = potentialLocation;
+            updateLastDirection();
         } else {
-            this.velocity = new Point2D(0, 0);
+            // Перебираем возможные направления, чтобы найти доступный путь
+            List<Point2D> alternativeDirections = Arrays.asList(
+                    new Point2D(-1, 0), new Point2D(1, 0),
+                    new Point2D(0, -1), new Point2D(0, 1)
+            );
+            Collections.shuffle(alternativeDirections);
+            for (Point2D dir : alternativeDirections) {
+                potentialLocation = location.add(dir);
+                potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
+                if (isValidMove(potentialLocation, grid, bots)) {
+                    this.velocity = dir;
+                    this.location = potentialLocation;
+                    updateLastDirection();
+                    break;
+                }
+            }
         }
     }
 
-    private void moveTowardsFood(PacManModel.CellValue[][] grid, Point2D closestFood) {
-        Queue<Point2D> queue = new LinkedList<>();
-        Map<Point2D, Point2D> cameFrom = new HashMap<>();
-        queue.add(location);
-        cameFrom.put(location, null);
+    private boolean isValidMove(Point2D location, PacManModel.CellValue[][] grid, List<BotPacMan> bots) {
+        int x = (int) location.getX();
+        int y = (int) location.getY();
+        if (x < 0 || x >= grid.length || y < 0 || y >= grid[0].length || grid[x][y] == PacManModel.CellValue.WALL) {
+            return false;
+        }
 
-        while (!queue.isEmpty()) {
-            Point2D current = queue.poll();
-            if (current.equals(closestFood)) {
-                break;
+        // Избегаем других ботов
+        for (BotPacMan bot : bots) {
+            if (bot != this && bot.getLocation().equals(location)) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private void moveTowardsFoodWithAStar(PacManModel.CellValue[][] grid, Point2D closestFood, List<Ghost> ghosts, List<BotPacMan> bots) {
+        PriorityQueue<Node> openSet = new PriorityQueue<>(Comparator.comparingDouble(Node::getF));
+        Map<Point2D, Node> allNodes = new HashMap<>();
+
+        Node startNode = new Node(location, null, 0, heuristic(location, closestFood));
+        openSet.add(startNode);
+        allNodes.put(location, startNode);
+
+        while (!openSet.isEmpty()) {
+            Node currentNode = openSet.poll();
+
+            if (currentNode.getLocation().equals(closestFood)) {
+                reconstructPath(currentNode);
+                return;
             }
 
-            for (Point2D dir : new Point2D[]{new Point2D(-1, 0), new Point2D(1, 0), new Point2D(0, -1), new Point2D(0, 1)}) {
-                Point2D neighbor = current.add(dir);
-                neighbor = setGoingOffscreenNewLocation(neighbor, grid.length, grid[0].length);
+            for (Point2D direction : new Point2D[]{new Point2D(-1, 0), new Point2D(1, 0), new Point2D(0, -1), new Point2D(0, 1)}) {
+                Point2D neighborLocation = currentNode.getLocation().add(direction);
+                neighborLocation = setGoingOffscreenNewLocation(neighborLocation, grid.length, grid[0].length);
 
-                if (!cameFrom.containsKey(neighbor) && neighbor.getX() >= 0 && neighbor.getX() < grid.length && neighbor.getY() >= 0 && neighbor.getY() < grid[0].length && grid[(int) neighbor.getX()][(int) neighbor.getY()] != PacManModel.CellValue.WALL) {
-                    queue.add(neighbor);
-                    cameFrom.put(neighbor, current);
+                if (isValidMove(neighborLocation, grid, bots) && !isGhostNearby(neighborLocation, ghosts, 1.0)) {
+                    double tentativeG = currentNode.getG() + 1;
+                    Node neighborNode = allNodes.getOrDefault(neighborLocation, new Node(neighborLocation));
+                    if (tentativeG < neighborNode.getG()) {
+                        neighborNode.setPrevious(currentNode);
+                        neighborNode.setG(tentativeG);
+                        neighborNode.setF(tentativeG + heuristic(neighborLocation, closestFood));
+                        openSet.add(neighborNode);
+                        allNodes.put(neighborLocation, neighborNode);
+                    }
                 }
             }
         }
 
-        Point2D nextStep = closestFood;
-        while (cameFrom.get(nextStep) != null && !cameFrom.get(nextStep).equals(location)) {
-            nextStep = cameFrom.get(nextStep);
+        moveRandomly(grid, bots);
+    }
+
+    private double heuristic(Point2D a, Point2D b) {
+        return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY());
+    }
+
+    private void reconstructPath(Node node) {
+        List<Point2D> path = new ArrayList<>();
+        while (node.getPrevious() != null) {
+            path.add(node.getLocation());
+            node = node.getPrevious();
         }
+        Collections.reverse(path);
 
-        this.velocity = nextStep.subtract(location);
-        this.location = nextStep;
-
-        // Устанавливаем последнее направление
-        if (velocity.getX() == 1) {
-            this.lastDirection = PacManModel.Direction.DOWN;
-        } else if (velocity.getX() == -1) {
-            this.lastDirection = PacManModel.Direction.UP;
-        } else if (velocity.getY() == 1) {
-            this.lastDirection = PacManModel.Direction.RIGHT;
-        } else if (velocity.getY() == -1) {
-            this.lastDirection = PacManModel.Direction.LEFT;
+        if (!path.isEmpty()) {
+            Point2D nextStep = path.get(0);
+            this.velocity = nextStep.subtract(location);
+            this.location = nextStep;
+            updateLastDirection();
         }
     }
 
@@ -140,6 +207,38 @@ public class BotPacMan extends PacMan {
         return null;
     }
 
+    private void moveRandomly(PacManModel.CellValue[][] grid, List<BotPacMan> bots) {
+        List<Point2D> possibleDirections = Arrays.asList(
+                new Point2D(-1, 0), new Point2D(1, 0),
+                new Point2D(0, -1), new Point2D(0, 1)
+        );
+        Collections.shuffle(possibleDirections);
+        for (Point2D direction : possibleDirections) {
+            if (isValidMove(location.add(direction), grid, bots)) {
+                moveInDirection(grid, direction, bots);
+                return;
+            }
+        }
+
+        // Если нет допустимых направлений, перемещаемся в любое направление
+        for (Point2D direction : possibleDirections) {
+            moveInDirection(grid, direction, bots);
+        }
+    }
+
+
+    private void updateLastDirection() {
+        if (velocity.getX() == 1) {
+            this.lastDirection = PacManModel.Direction.DOWN;
+        } else if (velocity.getX() == -1) {
+            this.lastDirection = PacManModel.Direction.UP;
+        } else if (velocity.getY() == 1) {
+            this.lastDirection = PacManModel.Direction.RIGHT;
+        } else if (velocity.getY() == -1) {
+            this.lastDirection = PacManModel.Direction.LEFT;
+        }
+    }
+
     public PacManModel.Direction getLastDirection() {
         return lastDirection;
     }
@@ -147,5 +246,51 @@ public class BotPacMan extends PacMan {
     @Override
     public Point2D getLocation() {
         return this.location;
+    }
+
+    private class Node {
+        private Point2D location;
+        private Node previous;
+        private double g;
+        private double f;
+
+        public Node(Point2D location) {
+            this(location, null, Double.MAX_VALUE, Double.MAX_VALUE);
+        }
+
+        public Node(Point2D location, Node previous, double g, double f) {
+            this.location = location;
+            this.previous = previous;
+            this.g = g;
+            this.f = f;
+        }
+
+        public Point2D getLocation() {
+            return location;
+        }
+
+        public Node getPrevious() {
+            return previous;
+        }
+
+        public void setPrevious(Node previous) {
+            this.previous = previous;
+        }
+
+        public double getG() {
+            return g;
+        }
+
+        public void setG(double g) {
+            this.g = g;
+        }
+
+        public double getF() {
+            return f;
+        }
+
+        public void setF(double f) {
+            this.f = f;
+        }
     }
 }

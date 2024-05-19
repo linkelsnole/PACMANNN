@@ -33,7 +33,7 @@ public class PacManModel {
     }
 
     private List<BotPacMan> botPacMen;
-    private static final int GHOST_EATING_MODE_DURATION = 25;
+    private static final int GHOST_EATING_MODE_DURATION = 5;
     private static int ghostEatingModeCounter;
 
     public PacManModel() {
@@ -160,14 +160,11 @@ public class PacManModel {
             direction = Direction.NONE;
         }
         this.pacman.move(direction, grid);
-        for (BotPacMan botPacMan : botPacMen) {
-            botPacMan.move(grid);
-        }
 
+        // Движение ботов и проверка на столкновение с привидениями
         for (Iterator<BotPacMan> iterator = botPacMen.iterator(); iterator.hasNext(); ) {
             BotPacMan botPacMan = iterator.next();
-            botPacMan.move(grid, ghosts);
-
+            botPacMan.move(grid, ghosts, botPacMen);
             for (Ghost ghost : ghosts) {
                 if (botPacMan.getLocation().equals(ghost.getLocation())) {
                     iterator.remove();
@@ -192,6 +189,7 @@ public class PacManModel {
             setGhostEatingModeCounter();
         }
 
+        // Обновление положения ботов и проверка на столкновение с едой
         for (BotPacMan botPacMan : botPacMen) {
             CellValue botPacmanLocationCellValue = grid[(int) botPacMan.getLocation().getX()][(int) botPacMan.getLocation().getY()];
             if (botPacmanLocationCellValue == CellValue.SMALLDOT) {
@@ -209,18 +207,18 @@ public class PacManModel {
         }
 
         if (ghostEatingMode) {
-            if (pacman.getLocation().equals(ghosts.get(0).getLocation())) {
-                sendGhostHome(ghosts.get(0));
-                score += 100;
-            }
-            if (pacman.getLocation().equals(ghosts.get(1).getLocation())) {
-                sendGhostHome(ghosts.get(1));
-                score += 100;
+            for (Ghost ghost : ghosts) {
+                if (pacman.getLocation().equals(ghost.getLocation())) {
+                    sendGhostHome(ghost);
+                    score += 100;
+                }
             }
         } else {
-            if (pacman.getLocation().equals(ghosts.get(0).getLocation()) || pacman.getLocation().equals(ghosts.get(1).getLocation())) {
-                gameOver = true;
-                pacman.setVelocity(new Point2D(0, 0));
+            for (Ghost ghost : ghosts) {
+                if (pacman.getLocation().equals(ghost.getLocation())) {
+                    gameOver = true;
+                    pacman.setVelocity(new Point2D(0, 0));
+                }
             }
         }
 
@@ -233,6 +231,12 @@ public class PacManModel {
     public void moveGhosts() {
         for (Ghost ghost : ghosts) {
             ghost.moveTowardsPacman(pacman.getLocation(), ghostEatingMode, grid);
+            for (BotPacMan bot : botPacMen) {
+                if (ghost.getLocation().equals(bot.getLocation())) {
+                    botPacMen.remove(bot);
+                    break;
+                }
+            }
         }
     }
 
