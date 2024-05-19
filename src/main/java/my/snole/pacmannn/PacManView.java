@@ -1,10 +1,10 @@
 package my.snole.pacmannn;
 
 import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import my.snole.pacmannn.PacManModel.CellValue;
 
 public class PacManView extends Group {
     public final static double CELL_WIDTH = 20.0;
@@ -22,11 +22,11 @@ public class PacManView extends Group {
     private Image wallImage;
     private Image bigDotImage;
     private Image smallDotImage;
-    private Image botPacmanImage;
+    private Image botPacmanRightImage;
+    private Image botPacmanUpImage;
+    private Image botPacmanDownImage;
+    private Image botPacmanLeftImage;
 
-    /**
-     * Initializes the values of the image instance variables from files
-     */
     public PacManView() {
         this.pacmanRightImage = new Image(getClass().getResourceAsStream("/image/pacmanRight.gif"));
         this.pacmanUpImage = new Image(getClass().getResourceAsStream("/image/pacmanUp.gif"));
@@ -38,12 +38,12 @@ public class PacManView extends Group {
         this.wallImage = new Image(getClass().getResourceAsStream("/image/wall.png"));
         this.bigDotImage = new Image(getClass().getResourceAsStream("/image/whitedot.png"));
         this.smallDotImage = new Image(getClass().getResourceAsStream("/image/smalldot.png"));
-        this.botPacmanImage = new Image(getClass().getResourceAsStream("/image/pacmanUp.gif"));
+        this.botPacmanRightImage = new Image(getClass().getResourceAsStream("/image/pacmanRight.gif"));
+        this.botPacmanUpImage = new Image(getClass().getResourceAsStream("/image/pacmanUp.gif"));
+        this.botPacmanDownImage = new Image(getClass().getResourceAsStream("/image/pacmanDown.gif"));
+        this.botPacmanLeftImage = new Image(getClass().getResourceAsStream("/image/pacmanLeft.gif"));
     }
 
-    /**
-     * Constructs an empty grid of ImageViews
-     */
     private void initializeGrid() {
         if (this.rowCount > 0 && this.columnCount > 0) {
             this.cellViews = new ImageView[this.rowCount][this.columnCount];
@@ -61,37 +61,29 @@ public class PacManView extends Group {
         }
     }
 
-    /** Updates the view to reflect the state of the model
-     *
-     * @param model
-     */
     public void update(PacManModel model) {
         assert model.getRowCount() == this.rowCount && model.getColumnCount() == this.columnCount;
-        // Clear all cells before updating
+
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
                 this.cellViews[row][column].setImage(null);
             }
         }
 
-        //for each ImageView, set the image to correspond with the CellValue of that cell
         for (int row = 0; row < this.rowCount; row++){
             for (int column = 0; column < this.columnCount; column++){
-                CellValue value = model.getCellValue(row, column);
-                if (value == CellValue.WALL) {
+                PacManModel.CellValue value = model.getCellValue(row, column);
+                if (value == PacManModel.CellValue.WALL) {
                     this.cellViews[row][column].setImage(this.wallImage);
                 }
-                else if (value == CellValue.BIGDOT) {
+                else if (value == PacManModel.CellValue.BIGDOT) {
                     this.cellViews[row][column].setImage(this.bigDotImage);
                 }
-                else if (value == CellValue.SMALLDOT) {
+                else if (value == PacManModel.CellValue.SMALLDOT) {
                     this.cellViews[row][column].setImage(this.smallDotImage);
                 }
 
-                //check which direction PacMan is going in and display the corresponding image
                 if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY()) {
-                    System.out.println("PacMan location: " + model.getPacmanLocation());
-                    System.out.println("PacMan direction: " + PacManModel.getLastDirection());
                     if (PacManModel.getLastDirection() == PacManModel.Direction.RIGHT || PacManModel.getLastDirection() == PacManModel.Direction.NONE) {
                         this.cellViews[row][column].setImage(this.pacmanRightImage);
                     } else if (PacManModel.getLastDirection() == PacManModel.Direction.LEFT) {
@@ -103,7 +95,6 @@ public class PacManView extends Group {
                     }
                 }
 
-                //make ghosts "blink" towards the end of ghostEatingMode (display regular ghost images on alternating updates of the counter)
                 if (PacManModel.isGhostEatingMode() && (Controller.getGhostEatingModeCounter() == 6 || Controller.getGhostEatingModeCounter() == 4 || Controller.getGhostEatingModeCounter() == 2)) {
                     if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
                         this.cellViews[row][column].setImage(this.ghost1Image);
@@ -113,31 +104,29 @@ public class PacManView extends Group {
                     }
                 }
 
-                //БОТ ПАКМАН
-                if (row == model.getBotPacmanLocation().getX() && column == model.getBotPacmanLocation().getY()) {
-                    BotPacMan botPacMan = model.getBotPacMan(); // Предполагаем, что этот метод существует в модели
-                    if (botPacMan.getLastDirection() == PacManModel.Direction.RIGHT || botPacMan.getLastDirection() == PacManModel.Direction.NONE) {
-                        this.cellViews[row][column].setImage(this.pacmanRightImage);
-                    } else if (botPacMan.getLastDirection() == PacManModel.Direction.LEFT) {
-                        this.cellViews[row][column].setImage(this.pacmanLeftImage);
-                    } else if (botPacMan.getLastDirection() == PacManModel.Direction.UP) {
-                        this.cellViews[row][column].setImage(this.pacmanUpImage);
-                    } else if (botPacMan.getLastDirection() == PacManModel.Direction.DOWN) {
-                        this.cellViews[row][column].setImage(this.pacmanDownImage);
+                // Отображение всех ботов PacMan
+                for (BotPacMan botPacMan : model.getBots()) {
+                    if (row == botPacMan.getLocation().getX() && column == botPacMan.getLocation().getY()) {
+                        if (botPacMan.getLastDirection() == PacManModel.Direction.RIGHT || botPacMan.getLastDirection() == PacManModel.Direction.NONE) {
+                            this.cellViews[row][column].setImage(this.botPacmanRightImage);
+                        } else if (botPacMan.getLastDirection() == PacManModel.Direction.LEFT) {
+                            this.cellViews[row][column].setImage(this.botPacmanLeftImage);
+                        } else if (botPacMan.getLastDirection() == PacManModel.Direction.UP) {
+                            this.cellViews[row][column].setImage(this.botPacmanUpImage);
+                        } else if (botPacMan.getLastDirection() == PacManModel.Direction.DOWN) {
+                            this.cellViews[row][column].setImage(this.botPacmanDownImage);
+                        }
                     }
                 }
 
-                //display blue ghosts in ghostEatingMode
-                else if (PacManModel.isGhostEatingMode()) {
+                if (PacManModel.isGhostEatingMode()) {
                     if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
                         this.cellViews[row][column].setImage(this.blueGhostImage);
                     }
                     if (row == model.getGhost2Location().getX() && column == model.getGhost2Location().getY()) {
                         this.cellViews[row][column].setImage(this.blueGhostImage);
                     }
-                }
-                //display regular ghost images otherwise
-                else {
+                } else {
                     if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
                         this.cellViews[row][column].setImage(this.ghost1Image);
                     }

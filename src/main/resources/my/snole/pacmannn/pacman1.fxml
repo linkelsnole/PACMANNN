@@ -1,10 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.scene.control.Button?>
-<?import javafx.scene.control.CheckBox?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
-<?import javafx.scene.control.RadioButton?>
 <?import javafx.scene.control.Separator?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
@@ -26,17 +24,17 @@
             </HBox>
         </bottom>
    <right>
-      <AnchorPane prefHeight="613.0" prefWidth="203.0" style="-fx-background-color: #1E272E;" BorderPane.alignment="CENTER">
+      <AnchorPane prefHeight="200.0" prefWidth="203.0" style="-fx-background-color: #1E272E;" BorderPane.alignment="CENTER">
          <children>
-            <Button layoutX="22.0" layoutY="252.0" mnemonicParsing="false" onMouseClicked="#handleStartButtonAction" prefHeight="40.0" prefWidth="66.0" style="-fx-background-color: #3498DB;" text="Start" textFill="WHITE">
+            <Button fx:id="startButton" layoutX="10.0" layoutY="201.0" mnemonicParsing="false" onMouseClicked="#handleStartButtonAction" prefHeight="28.0" prefWidth="177.0" style="-fx-background-color: #3498DB;" text="Start" textFill="WHITE">
                <font>
                   <Font size="16.0" />
                </font></Button>
-            <Button layoutX="106.0" layoutY="252.0" mnemonicParsing="false" onMouseClicked="#handleStopButtonAction" prefHeight="41.0" prefWidth="65.0" style="-fx-background-color: #3498DB;" text="Stop" textFill="WHITE">
+            <Button fx:id="stopButton" layoutX="10.0" layoutY="242.0" mnemonicParsing="false" onMouseClicked="#handleStopButtonAction" prefHeight="31.0" prefWidth="177.0" style="-fx-background-color: #3498DB;" text="Stop" textFill="WHITE">
                <font>
                   <Font size="16.0" />
                </font></Button>
-            <Text fill="WHITE" layoutX="19.0" layoutY="31.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Bots">
+            <Text fill="WHITE" layoutX="18.0" layoutY="73.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Bots">
                <font>
                   <Font size="18.0" />
                </font>
@@ -46,37 +44,28 @@
                   <Font size="18.0" />
                </font>
             </Text>
-            <Separator layoutX="10.0" layoutY="175.0" prefHeight="5.0" prefWidth="179.0" />
-            <Label fx:id="timerLabel" layoutX="100.0" layoutY="315.0" prefHeight="26.0" prefWidth="48.0" textFill="WHITE">
+            <Separator layoutX="12.0" layoutY="37.0" prefHeight="5.0" prefWidth="179.0" />
+            <Label fx:id="timerLabel" layoutX="72.0" layoutY="11.0" prefHeight="26.0" prefWidth="48.0" textFill="WHITE">
                <font>
                   <Font size="18.0" />
                </font>
             </Label>
-            <ComboBox layoutX="96.0" layoutY="208.0" prefHeight="25.0" prefWidth="85.0" />
-            <Text fill="WHITE" layoutX="30.0" layoutY="227.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Level: " wrappingWidth="50.8037109375">
+            <ComboBox layoutX="96.0" layoutY="153.0" prefHeight="25.0" prefWidth="85.0" />
+            <Text fill="WHITE" layoutX="18.0" layoutY="172.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Level: " wrappingWidth="50.8037109375">
                <font>
                   <Font size="18.0" />
                </font>
             </Text>
-            <RadioButton layoutX="24.0" layoutY="137.0" mnemonicParsing="false" text="OnBots" textFill="WHITE" />
-            <RadioButton layoutX="106.0" layoutY="137.0" mnemonicParsing="false" text="OffBots" textFill="WHITE" />
-            <Text fill="WHITE" layoutX="31.0" layoutY="335.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time: " wrappingWidth="47.845703125">
+            <Text fill="WHITE" layoutX="12.0" layoutY="31.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Time: " wrappingWidth="47.845703125">
                <font>
                   <Font size="18.0" />
                </font>
             </Text>
-            <CheckBox layoutX="14.0" layoutY="56.0" mnemonicParsing="false" text="First Bot" textFill="#e4e4e4">
+            <Button fx:id="addBotBnt" layoutX="106.0" layoutY="51.0" mnemonicParsing="false" onAction="#handleAddBotsButton" onMouseClicked="#handleStartButtonAction" prefHeight="23.0" prefWidth="83.0" style="-fx-background-color: #3498DB;" text="Add Bot" textFill="WHITE">
                <font>
-                  <Font size="15.0" />
+                  <Font size="16.0" />
                </font>
-            </CheckBox>
-            <ComboBox layoutX="117.0" layoutY="53.0" prefHeight="13.0" prefWidth="75.0" />
-            <CheckBox layoutX="14.0" layoutY="92.0" mnemonicParsing="false" text="Second Bot" textFill="#e4e4e4">
-               <font>
-                  <Font size="15.0" />
-               </font>
-            </CheckBox>
-            <ComboBox layoutX="117.0" layoutY="89.0" prefHeight="13.0" prefWidth="75.0" />
+            </Button>
          </children></AnchorPane>
    </right>
 </BorderPane>

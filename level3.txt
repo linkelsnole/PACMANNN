@@ -17,5 +17,5 @@ E E S S S S S W S P S W S S S S S E E
 W W S W S W W W S W S W W W S W S W W 
 W S S W S S S S S W S S S S S W S S W
 W B W W S W S W W W W W S W S W W B W
-W S S S S W S S S S S S S W S S S S W
+W Q S S S W S S S S S S S W S S S Q W
 W W W W W W W W W W W W W W W W W W W

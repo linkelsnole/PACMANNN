@@ -17,16 +17,21 @@ public class PacManModel {
     private int rowCount;
     private int columnCount;
     private CellValue[][] grid;
-    private int score;
+    public static int score;
     private int level;
-    private int dotCount;
+    public static int dotCount;
     private static boolean gameOver;
     private static boolean youWon;
-    private static boolean ghostEatingMode;
+    public static boolean ghostEatingMode;
     private PacMan pacman;
     private List<Ghost> ghosts;
     private static Direction lastDirection;
     private static Direction currentDirection;
+
+    public List<BotPacMan> getBots() {
+        return botPacMen;
+    }
+
     private List<BotPacMan> botPacMen;
     private static final int GHOST_EATING_MODE_DURATION = 25;
     private static int ghostEatingModeCounter;
@@ -36,7 +41,10 @@ public class PacManModel {
     }
 
     public void initializeLevel(String fileName) {
-        // Прежняя логика инициализации уровня
+        rowCount = 0;
+        columnCount = 0;
+        dotCount = 0;
+
         File file = new File(fileName);
         Scanner scanner = null;
         try {
@@ -44,22 +52,17 @@ public class PacManModel {
         } catch (FileNotFoundException e) {
             e.printStackTrace();
         }
+
+        List<String> lines = new ArrayList<>();
         while (scanner.hasNextLine()) {
             String line = scanner.nextLine();
-            Scanner lineScanner = new Scanner(line);
-            while (lineScanner.hasNext()) {
-                lineScanner.next();
-                columnCount++;
-            }
+            lines.add(line);
             rowCount++;
         }
-        columnCount = columnCount / rowCount;
-        Scanner scanner2 = null;
-        try {
-            scanner2 = new Scanner(file);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
+        if (rowCount > 0) {
+            columnCount = lines.get(0).split(" ").length;
         }
+
         grid = new CellValue[rowCount][columnCount];
         int row = 0;
         int pacmanRow = 0;
@@ -69,42 +72,38 @@ public class PacManModel {
         int ghost2Row = 0;
         int ghost2Column = 0;
 
-        int botPacmanRow = 0;
-        int botPacmanColumn = 0;
-
-        while (scanner2.hasNextLine()) {
+        for (String line : lines) {
             int column = 0;
-            String line = scanner2.nextLine();
             Scanner lineScanner = new Scanner(line);
             while (lineScanner.hasNext()) {
                 String value = lineScanner.next();
                 CellValue thisValue;
-                if (value.equals("W")) {
-                    thisValue = CellValue.WALL;
-                } else if (value.equals("S")) {
-                    thisValue = CellValue.SMALLDOT;
-                    dotCount++;
-                } else if (value.equals("B")) {
-                    thisValue = CellValue.BIGDOT;
-                    dotCount++;
-                } else if (value.equals("1")) {
-                    thisValue = CellValue.GHOST1HOME;
-                    ghost1Row = row;
-                    ghost1Column = column;
-                } else if (value.equals("2")) {
-                    thisValue = CellValue.GHOST2HOME;
-                    ghost2Row = row;
-                    ghost2Column = column;
-                } else if (value.equals("P")) {
-                    thisValue = CellValue.PACMANHOME;
-                    pacmanRow = row;
-                    pacmanColumn = column;
-                } else if (value.equals("Q")) {
-                    thisValue = CellValue.PACMANHOME;
-                    botPacmanRow = row;
-                    botPacmanColumn = column;
-                } else {
-                    thisValue = CellValue.EMPTY;
+                switch (value) {
+                    case "W" -> thisValue = CellValue.WALL;
+                    case "S" -> {
+                        thisValue = CellValue.SMALLDOT;
+                        dotCount++;
+                    }
+                    case "B" -> {
+                        thisValue = CellValue.BIGDOT;
+                        dotCount++;
+                    }
+                    case "1" -> {
+                        thisValue = CellValue.GHOST1HOME;
+                        ghost1Row = row;
+                        ghost1Column = column;
+                    }
+                    case "2" -> {
+                        thisValue = CellValue.GHOST2HOME;
+                        ghost2Row = row;
+                        ghost2Column = column;
+                    }
+                    case "P" -> {
+                        thisValue = CellValue.PACMANHOME;
+                        pacmanRow = row;
+                        pacmanColumn = column;
+                    }
+                    default -> thisValue = CellValue.EMPTY;
                 }
                 grid[row][column] = thisValue;
                 column++;
@@ -115,16 +114,12 @@ public class PacManModel {
         Point2D pacmanLocation = new Point2D(pacmanRow, pacmanColumn);
         Point2D ghost1Location = new Point2D(ghost1Row, ghost1Column);
         Point2D ghost2Location = new Point2D(ghost2Row, ghost2Column);
-        Point2D botPacmanLocation = new Point2D(botPacmanRow, botPacmanColumn);
-
-        System.out.println("PacMan initialized at: " + pacmanLocation);
 
         this.pacman = new PacMan(pacmanLocation, new Point2D(0, 0));
         this.ghosts = new ArrayList<>();
         this.ghosts.add(new Ghost(ghost1Location, new Point2D(-1, 0)));
         this.ghosts.add(new Ghost(ghost2Location, new Point2D(-1, 0)));
         this.botPacMen = new ArrayList<>();
-        this.botPacMen.add(new BotPacMan(botPacmanLocation, new Point2D(0, 0)));
 
         currentDirection = Direction.NONE;
         lastDirection = Direction.NONE;
@@ -153,7 +148,6 @@ public class PacManModel {
                 this.initializeLevel(Controller.getLevelFile(level - 1));
             }
             catch (ArrayIndexOutOfBoundsException e) {
-                //if there are no levels left in the level array, the game ends
                 youWon = true;
                 gameOver = true;
                 level--;
@@ -169,10 +163,21 @@ public class PacManModel {
         for (BotPacMan botPacMan : botPacMen) {
             botPacMan.move(grid);
         }
+
+        for (Iterator<BotPacMan> iterator = botPacMen.iterator(); iterator.hasNext(); ) {
+            BotPacMan botPacMan = iterator.next();
+            botPacMan.move(grid, ghosts);
+
+            for (Ghost ghost : ghosts) {
+                if (botPacMan.getLocation().equals(ghost.getLocation())) {
+                    iterator.remove();
+                    break;
+                }
+            }
+        }
+
         this.moveGhosts();
 
-        // Прежняя логика обработки шагов игры
-        // Если Пакман находит еду
         CellValue pacmanLocationCellValue = grid[(int) pacman.getLocation().getX()][(int) pacman.getLocation().getY()];
         if (pacmanLocationCellValue == CellValue.SMALLDOT) {
             grid[(int) pacman.getLocation().getX()][(int) pacman.getLocation().getY()] = CellValue.EMPTY;
@@ -187,7 +192,6 @@ public class PacManModel {
             setGhostEatingModeCounter();
         }
 
-        // Если бот Пакман находит еду
         for (BotPacMan botPacMan : botPacMen) {
             CellValue botPacmanLocationCellValue = grid[(int) botPacMan.getLocation().getX()][(int) botPacMan.getLocation().getY()];
             if (botPacmanLocationCellValue == CellValue.SMALLDOT) {
@@ -220,7 +224,6 @@ public class PacManModel {
             }
         }
 
-        // Если уровень завершен
         if (this.isLevelComplete()) {
             pacman.setVelocity(new Point2D(0, 0));
             startNextLevel();
@@ -321,6 +324,7 @@ public class PacManModel {
     public static void setGhostEatingMode(boolean ghostEatingModeBool) {
         ghostEatingMode = ghostEatingModeBool;
     }
+
     public Point2D getPacmanLocation() {
         return pacman.getLocation();
     }
@@ -334,11 +338,35 @@ public class PacManModel {
     }
 
     public Point2D getBotPacmanLocation() {
-        return botPacMen.get(0).getLocation(); // Если у вас есть несколько ботов, нужно будет изменить реализацию
+        if (botPacMen.isEmpty()) {
+            return new Point2D(0, 0);
+        }
+        return botPacMen.get(0).getLocation();
     }
 
     public BotPacMan getBotPacMan() {
-        return botPacMen.get(0); // Если у вас несколько ботов, измените реализацию
+        if (botPacMen.isEmpty()) {
+            return null;
+        }
+        return botPacMen.get(0);
     }
 
+    public void addBots(int count) {
+        for (int i = 0; i < count; i++) {
+            Point2D botLocation = findBotSpawnLocation();
+            BotPacMan bot = new BotPacMan(botLocation, new Point2D(0, 0));
+            botPacMen.add(bot);
+        }
+    }
+
+    private Point2D findBotSpawnLocation() {
+        for (int row = 0; row < getRowCount(); row++) {
+            for (int column = 0; column < getColumnCount(); column++) {
+                if (getCellValue(row, column) == CellValue.PACMANHOME) {
+                    return new Point2D(row, column);
+                }
+            }
+        }
+        return new Point2D(1, 1);
+    }
 }

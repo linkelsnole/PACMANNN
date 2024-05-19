@@ -1,12 +1,10 @@
-/**
- * The Controller handles user input and coordinates the updating of the model and the view with the help of a timer.
- */
-
 package my.snole.pacmannn;
 
-import javafx.fxml.FXML;
 import javafx.event.EventHandler;
+import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.scene.control.Label;
+import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.application.Platform;
@@ -35,37 +33,35 @@ public class Controller implements EventHandler<KeyEvent> {
     private Timer timer;
     private static int ghostEatingModeCounter;
     private boolean paused;
+    private boolean gameStarted;
 
     public Controller() {
         this.paused = false;
+        this.gameStarted = false;
     }
 
-    /**
-     * Initialize and update the model and view from the first txt file and starts the timer.
-     */
     public void initialize() {
-        String file = this.getLevelFile(0);
         gameTimer = new GameTimer(timerLabel);
         this.pacManModel = new PacManModel();
-        this.pacManView = new PacManView(); // создаем PacManView
+        this.pacManView = new PacManView();
         this.pacManView.setRowCount(pacManModel.getRowCount());
         this.pacManView.setColumnCount(pacManModel.getColumnCount());
-        this.borderPane.setCenter(this.pacManView); // добавляем PacManView в центр BorderPane
+        this.borderPane.setCenter(this.pacManView);
         this.update(PacManModel.Direction.NONE);
         ghostEatingModeCounter = 25;
-        this.startTimer();
+        gameTimer.start();
+        startTimer();
     }
 
-    /**
-     * Schedules the model to update based on the timer.
-     */
     private void startTimer() {
         this.timer = new java.util.Timer();
         TimerTask timerTask = new TimerTask() {
             public void run() {
                 Platform.runLater(new Runnable() {
                     public void run() {
-                        update(pacManModel.getCurrentDirection());
+                        if (gameStarted) {
+                            update(pacManModel.getCurrentDirection());
+                        }
                     }
                 });
             }
@@ -75,35 +71,28 @@ public class Controller implements EventHandler<KeyEvent> {
         this.timer.schedule(timerTask, 0, frameTimeInMilliseconds);
     }
 
-    /**
-     * Steps the PacManModel, updates the view, updates score and level, displays Game Over/You Won, and instructions of how to play
-     * @param direction the most recently inputted direction for PacMan to move in
-     */
     private void update(PacManModel.Direction direction) {
-        this.pacManModel.step(direction);
-        this.pacManView.update(pacManModel);
-        this.scoreLabel.setText(String.format("Score: %d", this.pacManModel.getScore()));
-        this.levelLabel.setText(String.format("Level: %d", this.pacManModel.getLevel()));
-        if (pacManModel.isGameOver()) {
-            this.gameOverLabel.setText(String.format("GAME OVER"));
-            pause();
-        }
-        if (pacManModel.isYouWon()) {
-            this.gameOverLabel.setText(String.format("YOU WON!"));
-        }
-        //when PacMan is in ghostEatingMode, count down the ghostEatingModeCounter to reset ghostEatingMode to false when the counter is 0
-        if (pacManModel.isGhostEatingMode()) {
-            ghostEatingModeCounter--;
-        }
-        if (ghostEatingModeCounter == 0 && pacManModel.isGhostEatingMode()) {
-            pacManModel.setGhostEatingMode(false);
+        if (!paused && gameStarted) {
+            this.pacManModel.step(direction);
+            this.pacManView.update(pacManModel);
+            this.scoreLabel.setText(String.format("Score: %d", this.pacManModel.getScore()));
+            this.levelLabel.setText(String.format("Level: %d", this.pacManModel.getLevel()));
+            if (pacManModel.isGameOver()) {
+                this.gameOverLabel.setText("GAME OVER");
+                pause();
+            }
+            if (pacManModel.isYouWon()) {
+                this.gameOverLabel.setText("YOU WON!");
+            }
+            if (pacManModel.isGhostEatingMode()) {
+                ghostEatingModeCounter--;
+            }
+            if (ghostEatingModeCounter == 0 && pacManModel.isGhostEatingMode()) {
+                pacManModel.setGhostEatingMode(false);
+            }
         }
     }
 
-    /**
-     * Takes in user keyboard input to control the movement of PacMan and start new games
-     * @param keyEvent user's key click
-     */
     @Override
     public void handle(KeyEvent keyEvent) {
         boolean keyRecognized = true;
@@ -118,11 +107,7 @@ public class Controller implements EventHandler<KeyEvent> {
         } else if (code == KeyCode.DOWN) {
             direction = PacManModel.Direction.DOWN;
         } else if (code == KeyCode.G) {
-            pause();
-            this.pacManModel.startNewGame();
-            this.gameOverLabel.setText(String.format(""));
-            paused = false;
-            this.startTimer();
+            restartGame();
         } else {
             keyRecognized = false;
         }
@@ -132,12 +117,24 @@ public class Controller implements EventHandler<KeyEvent> {
         }
     }
 
-    /**
-     * Pause the timer
-     */
+    private void restartGame() {
+        pause();
+        this.pacManModel.startNewGame();
+        this.gameOverLabel.setText("");
+        paused = false;
+        gameStarted = true;
+        ghostEatingModeCounter = 25;
+        gameTimer.start();
+        borderPane.requestFocus();
+        startTimer();
+        update(PacManModel.Direction.NONE);
+    }
+
     public void pause() {
+        if (this.timer != null) {
             this.timer.cancel();
-            this.paused = true;
+        }
+        this.paused = true;
     }
 
     public double getBoardWidth() {
@@ -156,8 +153,7 @@ public class Controller implements EventHandler<KeyEvent> {
         return ghostEatingModeCounter;
     }
 
-    public static String getLevelFile(int x)
-    {
+    public static String getLevelFile(int x) {
         return levelFiles[x];
     }
 
@@ -165,17 +161,25 @@ public class Controller implements EventHandler<KeyEvent> {
         return paused;
     }
 
-
     @FXML
     private void handleStartButtonAction() {
-        gameTimer.start();
+//        int botCount = Integer.parseInt(botCountField.getText());
+//        pacManModel.addBots(botCount);
+        gameStarted = true;
         borderPane.requestFocus();
     }
 
     @FXML
     private void handleStopButtonAction() {
         gameTimer.reset();
+        gameStarted = false;
         borderPane.requestFocus();
     }
 
+    @FXML
+    private void handleAddBotsButton () {
+        pacManModel.addBots(1);
+        gameStarted = true;
+        borderPane.requestFocus();
+    }
 }
