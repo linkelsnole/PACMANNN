@@ -33,7 +33,7 @@ public class PacManModel {
     }
 
     private List<BotPacMan> botPacMen;
-    private static final int GHOST_EATING_MODE_DURATION = 5;
+    private static final int GHOST_EATING_MODE_DURATION = 3;
     private static int ghostEatingModeCounter;
 
     public PacManModel() {
@@ -137,6 +137,7 @@ public class PacManModel {
         this.initializeLevel(Controller.getLevelFile(0));
     }
 
+
     public void startNextLevel() {
         if (this.isLevelComplete()) {
             this.level++;
@@ -230,10 +231,11 @@ public class PacManModel {
 
     public void moveGhosts() {
         for (Ghost ghost : ghosts) {
-            ghost.moveTowardsPacman(pacman.getLocation(), ghostEatingMode, grid);
-            for (BotPacMan bot : botPacMen) {
+            ghost.moveTowardsPacmanOrBots(pacman.getLocation(), botPacMen, ghostEatingMode, grid);
+            for (Iterator<BotPacMan> iterator = botPacMen.iterator(); iterator.hasNext(); ) {
+                BotPacMan bot = iterator.next();
                 if (ghost.getLocation().equals(bot.getLocation())) {
-                    botPacMen.remove(bot);
+                    iterator.remove();
                     break;
                 }
             }
@@ -372,5 +374,9 @@ public class PacManModel {
             }
         }
         return new Point2D(1, 1);
+    }
+
+    public void setGameOver(boolean gameOver) {
+        PacManModel.gameOver = gameOver;
     }
 }

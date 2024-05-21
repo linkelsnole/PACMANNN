@@ -7,6 +7,7 @@ import java.util.Timer;
 import java.util.TimerTask;
 
 public class GameTimer {
+
     private int secondsElapsed;
     private Timer timer;
     private Label timerLabel;
@@ -37,13 +38,23 @@ public class GameTimer {
         if (timer != null) {
             timer.cancel();
         }
-        secondsElapsed = 0;
+        secondsElapsed = -1;
         updateLabel();
+    }
+
+    public void stop() {
+        if (timer != null) {
+            timer.cancel();
+        }
     }
 
     private void updateLabel() {
         int minutes = secondsElapsed / 60;
         int seconds = secondsElapsed % 60;
         timerLabel.setText(String.format("%02d:%02d", minutes, seconds));
+    }
+
+    public void setSecondsElapsed(int secondsElapsed) {
+        this.secondsElapsed = secondsElapsed;
     }
 }

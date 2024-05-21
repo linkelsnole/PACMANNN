@@ -24,15 +24,15 @@ public class BotPacMan extends PacMan {
             moveTowardsFoodWithAStar(grid, closestFood, ghosts, bots);
         } else {
             // Случайное движение в направлении еды, если нет ближайшей еды или путь заблокирован
-            moveRandomly(grid, bots);
+            moveRandomly(grid, ghosts, bots);
         }
 
         this.location = setGoingOffscreenNewLocation(this.location, grid.length, grid[0].length);
     }
 
-    private boolean isGhostNearby(Point2D botLocation, List<Ghost> ghosts, double radius) {
+    private boolean isGhostNearby(Point2D location, List<Ghost> ghosts, double radius) {
         for (Ghost ghost : ghosts) {
-            if (botLocation.distance(ghost.getLocation()) <= radius) {
+            if (location.distance(ghost.getLocation()) <= radius) {
                 return true;
             }
         }
@@ -52,14 +52,15 @@ public class BotPacMan extends PacMan {
 
         // Перебираем возможные направления, чтобы найти доступный путь
         for (Point2D direction : possibleDirections) {
-            if (isValidMove(location.add(direction), grid, bots)) {
-                moveInDirection(grid, direction, bots);
+            Point2D newLocation = location.add(direction);
+            if (isValidMove(newLocation, grid, bots) && !isGhostNearby(newLocation, ghosts, 1.0)) {
+                moveInDirection(grid, direction, ghosts, bots);
                 return;
             }
         }
 
         // Если нет допустимых направлений, ищем случайное направление
-        moveRandomly(grid, bots);
+        moveRandomly(grid, ghosts, bots);
     }
 
     private Point2D calculateOppositeDirection(List<Ghost> ghosts) {
@@ -81,11 +82,11 @@ public class BotPacMan extends PacMan {
         );
     }
 
-    private void moveInDirection(PacManModel.CellValue[][] grid, Point2D direction, List<BotPacMan> bots) {
+    private void moveInDirection(PacManModel.CellValue[][] grid, Point2D direction, List<Ghost> ghosts, List<BotPacMan> bots) {
         Point2D potentialLocation = location.add(direction);
         potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
-        if (isValidMove(potentialLocation, grid, bots)) {
+        if (isValidMove(potentialLocation, grid, bots) && !isGhostNearby(potentialLocation, ghosts, 1.0)) {
             this.velocity = direction;
             this.location = potentialLocation;
             updateLastDirection();
@@ -99,7 +100,7 @@ public class BotPacMan extends PacMan {
             for (Point2D dir : alternativeDirections) {
                 potentialLocation = location.add(dir);
                 potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
-                if (isValidMove(potentialLocation, grid, bots)) {
+                if (isValidMove(potentialLocation, grid, bots) && !isGhostNearby(potentialLocation, ghosts, 1.0)) {
                     this.velocity = dir;
                     this.location = potentialLocation;
                     updateLastDirection();
@@ -159,7 +160,7 @@ public class BotPacMan extends PacMan {
             }
         }
 
-        moveRandomly(grid, bots);
+        moveRandomly(grid, ghosts, bots);
     }
 
     private double heuristic(Point2D a, Point2D b) {
@@ -207,25 +208,24 @@ public class BotPacMan extends PacMan {
         return null;
     }
 
-    private void moveRandomly(PacManModel.CellValue[][] grid, List<BotPacMan> bots) {
+    private void moveRandomly(PacManModel.CellValue[][] grid, List<Ghost> ghosts, List<BotPacMan> bots) {
         List<Point2D> possibleDirections = Arrays.asList(
                 new Point2D(-1, 0), new Point2D(1, 0),
                 new Point2D(0, -1), new Point2D(0, 1)
         );
         Collections.shuffle(possibleDirections);
         for (Point2D direction : possibleDirections) {
-            if (isValidMove(location.add(direction), grid, bots)) {
-                moveInDirection(grid, direction, bots);
+            if (isValidMove(location.add(direction), grid, bots) && !isGhostNearby(location.add(direction), ghosts, 1.0)) {
+                moveInDirection(grid, direction, ghosts, bots);  // Передаем ghosts
                 return;
             }
         }
 
         // Если нет допустимых направлений, перемещаемся в любое направление
         for (Point2D direction : possibleDirections) {
-            moveInDirection(grid, direction, bots);
+            moveInDirection(grid, direction, ghosts, bots);  // Передаем ghosts
         }
     }
-
 
     private void updateLastDirection() {
         if (velocity.getX() == 1) {

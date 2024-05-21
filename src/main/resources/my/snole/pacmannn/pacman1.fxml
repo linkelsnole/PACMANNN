@@ -50,7 +50,7 @@
                   <Font size="18.0" />
                </font>
             </Label>
-            <ComboBox layoutX="96.0" layoutY="153.0" prefHeight="25.0" prefWidth="85.0" />
+            <ComboBox fx:id="selectLvlCombo" layoutX="96.0" layoutY="153.0" onAction="#handleLevelSelection" prefHeight="25.0" prefWidth="85.0" />
             <Text fill="WHITE" layoutX="18.0" layoutY="172.0" strokeType="OUTSIDE" strokeWidth="0.0" text="Level: " wrappingWidth="50.8037109375">
                <font>
                   <Font size="18.0" />
@@ -62,6 +62,11 @@
                </font>
             </Text>
             <Button fx:id="addBotBnt" layoutX="106.0" layoutY="51.0" mnemonicParsing="false" onAction="#handleAddBotsButton" onMouseClicked="#handleStartButtonAction" prefHeight="23.0" prefWidth="83.0" style="-fx-background-color: #3498DB;" text="Add Bot" textFill="WHITE">
+               <font>
+                  <Font size="16.0" />
+               </font>
+            </Button>
+            <Button fx:id="nextLevelButton" layoutX="13.0" layoutY="389.0" mnemonicParsing="false" onAction="#handleNextLevelButtonAction" prefHeight="28.0" prefWidth="177.0" style="-fx-background-color: #3498DB;" text="Next Level -&gt;" textFill="WHITE">
                <font>
                   <Font size="16.0" />
                </font>

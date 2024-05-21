@@ -3,6 +3,7 @@ package my.snole.pacmannn;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
+import javafx.scene.control.ComboBox;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
@@ -20,6 +21,7 @@ public class Controller implements EventHandler<KeyEvent> {
     @FXML private Label gameOverLabel;
     @FXML private BorderPane borderPane;
     @FXML private Label timerLabel;
+    @FXML private ComboBox<String> selectLvlCombo;
     private static final int MOVE_INTERVAL = 6;
     private GameTimer gameTimer;
     private PacManView pacManView;
@@ -49,8 +51,9 @@ public class Controller implements EventHandler<KeyEvent> {
         this.borderPane.setCenter(this.pacManView);
         this.update(PacManModel.Direction.NONE);
         ghostEatingModeCounter = 25;
-        gameTimer.start();
         startTimer();
+        selectLvlCombo.getItems().addAll("Level 1", "Level 2", "Level 3");
+        selectLvlCombo.setValue("Level 1");
     }
 
     private void startTimer() {
@@ -124,6 +127,7 @@ public class Controller implements EventHandler<KeyEvent> {
         paused = false;
         gameStarted = true;
         ghostEatingModeCounter = 25;
+        gameTimer.reset();
         gameTimer.start();
         borderPane.requestFocus();
         startTimer();
@@ -163,15 +167,14 @@ public class Controller implements EventHandler<KeyEvent> {
 
     @FXML
     private void handleStartButtonAction() {
-//        int botCount = Integer.parseInt(botCountField.getText());
-//        pacManModel.addBots(botCount);
+        gameTimer.start();
         gameStarted = true;
         borderPane.requestFocus();
     }
 
     @FXML
     private void handleStopButtonAction() {
-        gameTimer.reset();
+        gameTimer.stop();
         gameStarted = false;
         borderPane.requestFocus();
     }
@@ -181,5 +184,37 @@ public class Controller implements EventHandler<KeyEvent> {
         pacManModel.addBots(1);
         gameStarted = true;
         borderPane.requestFocus();
+    }
+
+    @FXML
+    private void handleLevelSelection() {
+        String selectedLevel = selectLvlCombo.getValue();
+        if (selectedLevel != null) {
+            int levelIndex = Integer.parseInt(selectedLevel.replace("Level ", "")) - 1;
+            pacManModel.initializeLevel(Controller.getLevelFile(levelIndex));
+            pacManView.update(pacManModel);
+            borderPane.requestFocus();
+        }
+    }
+
+    @FXML
+    private void handleNextLevelButtonAction() {
+        String selectedLevel = selectLvlCombo.getValue();
+        if (selectedLevel != null) {
+            int levelIndex = Integer.parseInt(selectedLevel.replace("Level ", "")) - 1;
+            if (levelIndex < levelFiles.length - 1) {
+                levelIndex++;
+                selectLvlCombo.setValue("Level " + (levelIndex + 1));
+                pacManModel.initializeLevel(Controller.getLevelFile(levelIndex));
+                pacManView.update(pacManModel);
+                borderPane.requestFocus();
+            } else {
+                // Завершаем игру, если нет больше уровней
+                gameOverLabel.setText("GAME OVER - No more levels");
+                gameTimer.stop();
+                pacManModel.setGameOver(true);
+                pause();
+            }
+        }
     }
 }

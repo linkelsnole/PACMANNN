@@ -1,6 +1,7 @@
 package my.snole.pacmannn;
 
 import javafx.geometry.Point2D;
+import java.util.List;
 import java.util.Random;
 
 public class Ghost extends GameCharacter {
@@ -27,23 +28,23 @@ public class Ghost extends GameCharacter {
         this.location = potentialLocation;
     }
 
-    public void moveTowardsPacman(Point2D pacmanLocation, boolean ghostEatingMode, PacManModel.CellValue[][] grid) {
+    public void moveTowardsCharacter(Point2D targetLocation, boolean ghostEatingMode, PacManModel.CellValue[][] grid) {
         Random generator = new Random();
         Point2D potentialVelocity = this.velocity;
         Point2D potentialLocation = this.location.add(potentialVelocity);
         potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
         if (!ghostEatingMode) {
-            if (this.location.getY() == pacmanLocation.getY()) {
-                potentialVelocity = new Point2D(this.location.getX() > pacmanLocation.getX() ? -1 : 1, 0);
-            } else if (this.location.getX() == pacmanLocation.getX()) {
-                potentialVelocity = new Point2D(0, this.location.getY() > pacmanLocation.getY() ? -1 : 1);
+            if (this.location.getY() == targetLocation.getY()) {
+                potentialVelocity = new Point2D(this.location.getX() > targetLocation.getX() ? -1 : 1, 0);
+            } else if (this.location.getX() == targetLocation.getX()) {
+                potentialVelocity = new Point2D(0, this.location.getY() > targetLocation.getY() ? -1 : 1);
             }
         } else {
-            if (this.location.getY() == pacmanLocation.getY()) {
-                potentialVelocity = new Point2D(this.location.getX() > pacmanLocation.getX() ? 1 : -1, 0);
-            } else if (this.location.getX() == pacmanLocation.getX()) {
-                potentialVelocity = new Point2D(0, this.location.getY() > pacmanLocation.getY() ? 1 : -1);
+            if (this.location.getY() == targetLocation.getY()) {
+                potentialVelocity = new Point2D(this.location.getX() > targetLocation.getX() ? 1 : -1, 0);
+            } else if (this.location.getX() == targetLocation.getX()) {
+                potentialVelocity = new Point2D(0, this.location.getY() > targetLocation.getY() ? 1 : -1);
             }
         }
 
@@ -60,6 +61,21 @@ public class Ghost extends GameCharacter {
 
         this.velocity = potentialVelocity;
         this.location = potentialLocation;
+    }
+
+    public void moveTowardsPacmanOrBots(Point2D pacmanLocation, List<BotPacMan> bots, boolean ghostEatingMode, PacManModel.CellValue[][] grid) {
+        Point2D closestTarget = pacmanLocation;
+        double closestDistance = this.location.distance(pacmanLocation);
+
+        for (BotPacMan bot : bots) {
+            double distance = this.location.distance(bot.getLocation());
+            if (distance < closestDistance) {
+                closestDistance = distance;
+                closestTarget = bot.getLocation();
+            }
+        }
+
+        moveTowardsCharacter(closestTarget, ghostEatingMode, grid);
     }
 
     private Point2D changeVelocity(PacManModel.Direction direction) {
