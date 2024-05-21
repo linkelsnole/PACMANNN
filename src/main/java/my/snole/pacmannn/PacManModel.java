@@ -230,8 +230,10 @@ public class PacManModel {
     }
 
     public void moveGhosts() {
+        System.out.println("Moving ghosts...");
         for (Ghost ghost : ghosts) {
             ghost.moveTowardsPacmanOrBots(pacman.getLocation(), botPacMen, ghostEatingMode, grid);
+            System.out.println("Moved ghost to: " + ghost.getLocation());
             for (Iterator<BotPacMan> iterator = botPacMen.iterator(); iterator.hasNext(); ) {
                 BotPacMan bot = iterator.next();
                 if (ghost.getLocation().equals(bot.getLocation())) {
@@ -241,6 +243,7 @@ public class PacManModel {
             }
         }
     }
+
 
     public void sendGhostHome(Ghost ghost) {
         for (int row = 0; row < this.rowCount; row++) {
