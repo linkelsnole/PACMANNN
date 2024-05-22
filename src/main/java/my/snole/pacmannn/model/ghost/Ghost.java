@@ -1,10 +1,16 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.model.ghost;
 
 import javafx.geometry.Point2D;
+import javafx.scene.image.Image;
+import my.snole.pacmannn.model.pacman.BotPacMan;
+import my.snole.pacmannn.core.PacManModel;
+import my.snole.pacmannn.model.GameCharacter;
+
 import java.util.List;
 import java.util.Random;
 
 public class Ghost extends GameCharacter {
+    protected Image image;
     private int stepCounter;
     private static final int SLOW_DOWN_FACTOR = 1;
     private boolean shouldMove;
@@ -37,7 +43,7 @@ public class Ghost extends GameCharacter {
         }
         stepCounter++;
         if (stepCounter % SLOW_DOWN_FACTOR == 0) {
-            shouldMove = !shouldMove; // Переключаем флаг движения каждые несколько шагов
+            shouldMove = !shouldMove;
         }
     }
 
@@ -79,7 +85,7 @@ public class Ghost extends GameCharacter {
         }
         stepCounter++;
         if (stepCounter % SLOW_DOWN_FACTOR == 0) {
-            shouldMove = !shouldMove; // Переключаем флаг движения каждые несколько шагов
+            shouldMove = !shouldMove;
         }
     }
 
@@ -106,5 +112,9 @@ public class Ghost extends GameCharacter {
             case DOWN: return new Point2D(1, 0);
             default: return new Point2D(0, 0);
         }
+    }
+
+    public Image getImage() {
+        return image;
     }
 }

@@ -1,6 +1,8 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.model.pacman;
 
 import javafx.geometry.Point2D;
+import my.snole.pacmannn.core.PacManModel;
+import my.snole.pacmannn.model.GameCharacter;
 
 public class PacMan extends GameCharacter {
     public PacMan(Point2D location, Point2D velocity) {

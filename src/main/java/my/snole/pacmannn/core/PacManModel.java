@@ -1,5 +1,9 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.core;
+
 import javafx.geometry.Point2D;
+import my.snole.pacmannn.model.ghost.*;
+import my.snole.pacmannn.model.pacman.BotPacMan;
+import my.snole.pacmannn.model.pacman.PacMan;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -30,8 +34,12 @@ public class PacManModel {
     private List<BotPacMan> botPacMen;
     private static final int GHOST_EATING_MODE_DURATION = 3;
     private static int ghostEatingModeCounter;
+    private GhostManager ghostManager;
 
     public PacManModel() {
+        this.botPacMen = new ArrayList<>();
+        this.ghosts = new ArrayList<>();
+        this.ghostManager = new GhostManager(this.ghosts);
         this.startNewGame(2); // Default to 2 ghosts
     }
 
@@ -107,8 +115,9 @@ public class PacManModel {
 
         // Add initial ghosts based on the homes found
         for (Point2D home : ghostHomes) {
-            this.ghosts.add(new Ghost(home, new Point2D(-1, 0)));
+            addGhost(home);
         }
+        this.ghostManager = new GhostManager(this.ghosts);  // Ensure GhostManager is properly initialized with the ghosts
     }
 
     public void startNewGame(int initialGhosts) {
@@ -121,9 +130,7 @@ public class PacManModel {
         score = 0;
         level = 1;
         this.initializeLevel(Controller.getLevelFile(0));
-
-        // Add initial ghosts
-        this.ghosts.clear();
+        this.ghostManager.getGhosts().clear();
         for (int i = 0; i < initialGhosts; i++) {
             this.addGhost();
         }
@@ -220,24 +227,13 @@ public class PacManModel {
     }
 
     public void moveGhosts() {
-        System.out.println("Moving ghosts...");
-        for (Ghost ghost : ghosts) {
-            ghost.moveTowardsPacmanOrBots(pacman.getLocation(), botPacMen, ghostEatingMode, grid);
-            System.out.println("Moved ghost to: " + ghost.getLocation());
-            for (Iterator<BotPacMan> iterator = botPacMen.iterator(); iterator.hasNext(); ) {
-                BotPacMan bot = iterator.next();
-                if (ghost.getLocation().equals(bot.getLocation())) {
-                    iterator.remove();
-                    break;
-                }
-            }
-        }
+        ghostManager.moveGhosts(pacman.getLocation(), botPacMen, ghostEatingMode, grid);
     }
 
     public void sendGhostHome(Ghost ghost) {
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
-                if (grid[row][column] == (ghost == ghosts.get(0) ? CellValue.GHOST1HOME : CellValue.GHOST2HOME)) {
+                if (grid[row][column] == CellValue.GHOST1HOME) {
                     ghost.setLocation(new Point2D(row, column));
                     ghost.setVelocity(new Point2D(-1, 0));
                 }
@@ -372,14 +368,32 @@ public class PacManModel {
         return new Point2D(1, 1);
     }
 
+    public void addGhost(Point2D location) {
+        Ghost newGhost = createRandomGhost(location, new Point2D(-1, 0));
+        this.ghostManager.addGhost(newGhost);
+    }
+
     public void addGhost() {
         for (int row = 0; row < getRowCount(); row++) {
             for (int column = 0; column < getColumnCount(); column++) {
                 if (grid[row][column] == CellValue.EMPTY) {
-                    this.ghosts.add(new Ghost(new Point2D(row, column), new Point2D(-1, 0)));
+                    Ghost newGhost = createRandomGhost(new Point2D(row, column), new Point2D(-1, 0));
+                    this.ghosts.add(newGhost);
                     return;
                 }
             }
+        }
+    }
+
+    private Ghost createRandomGhost(Point2D location, Point2D velocity) {
+        Random random = new Random();
+        int ghostType = random.nextInt(4);
+        switch (ghostType) {
+            case 0: return new RedGhost(location, velocity);
+            case 1: return new BlueGhost(location, velocity);
+            case 2: return new PinkGhost(location, velocity);
+            case 3: return new YellowGhost(location, velocity);
+            default: return new RedGhost(location, velocity);
         }
     }
 

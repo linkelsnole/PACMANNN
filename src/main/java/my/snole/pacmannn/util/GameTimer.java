@@ -1,4 +1,4 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.util;
 
 import javafx.application.Platform;
 import javafx.scene.control.Label;

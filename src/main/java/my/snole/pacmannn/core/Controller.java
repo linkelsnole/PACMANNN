@@ -1,14 +1,15 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.core;
 
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
-import javafx.geometry.Point2D;
 import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.application.Platform;
 import javafx.scene.layout.BorderPane;
+import my.snole.pacmannn.util.GameTimer;
+import my.snole.pacmannn.util.PacManView;
 
 import java.util.Timer;
 import java.util.TimerTask;

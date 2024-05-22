@@ -1,9 +1,12 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.util;
 
 import javafx.fxml.FXML;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import my.snole.pacmannn.core.PacManModel;
+import my.snole.pacmannn.model.ghost.Ghost;
+import my.snole.pacmannn.model.pacman.BotPacMan;
 
 public class PacManView extends Group {
     public final static double CELL_WIDTH = 20.0;
@@ -15,8 +18,10 @@ public class PacManView extends Group {
     private Image pacmanUpImage;
     private Image pacmanDownImage;
     private Image pacmanLeftImage;
-    private Image ghostImage;
     private Image blueGhostImage;
+    private Image redGhostImage;
+    private Image pinkGhostImage;
+    private Image yellowGhostImage;
     private Image wallImage;
     private Image bigDotImage;
     private Image smallDotImage;
@@ -30,8 +35,10 @@ public class PacManView extends Group {
         this.pacmanUpImage = new Image(getClass().getResourceAsStream("/image/pacmanUp.gif"));
         this.pacmanDownImage = new Image(getClass().getResourceAsStream("/image/pacmanDown.gif"));
         this.pacmanLeftImage = new Image(getClass().getResourceAsStream("/image/pacmanLeft.gif"));
-        this.ghostImage = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
         this.blueGhostImage = new Image(getClass().getResourceAsStream("/image/blueghost.gif"));
+        this.redGhostImage = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
+        this.pinkGhostImage = new Image(getClass().getResourceAsStream("/image/pinkghost.gif"));
+        this.yellowGhostImage = new Image(getClass().getResourceAsStream("/image/yellowghost.gif"));
         this.wallImage = new Image(getClass().getResourceAsStream("/image/wall.png"));
         this.bigDotImage = new Image(getClass().getResourceAsStream("/image/whitedot.png"));
         this.smallDotImage = new Image(getClass().getResourceAsStream("/image/smalldot.png"));
@@ -93,11 +100,7 @@ public class PacManView extends Group {
                 // Отображение всех привидений
                 for (Ghost ghost : model.getGhosts()) {
                     if (row == ghost.getLocation().getX() && column == ghost.getLocation().getY()) {
-                        if (PacManModel.isGhostEatingMode()) {
-                            this.cellViews[row][column].setImage(this.blueGhostImage);
-                        } else {
-                            this.cellViews[row][column].setImage(this.ghostImage);
-                        }
+                        this.cellViews[row][column].setImage(ghost.getImage());
                     }
                 }
 

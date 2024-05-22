@@ -1,12 +1,12 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.core;
 
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
-import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
+import my.snole.pacmannn.core.Controller;
 
 /**
  * Sets up the controller, loads the fxml file, and runs the application.

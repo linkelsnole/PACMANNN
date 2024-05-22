@@ -1,6 +1,7 @@
-package my.snole.pacmannn;
+package my.snole.pacmannn.model;
 
 import javafx.geometry.Point2D;
+import my.snole.pacmannn.core.PacManModel;
 
 public abstract class GameCharacter {
     protected Point2D location;
