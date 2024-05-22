@@ -1,7 +1,6 @@
 package my.snole.pacmannn;
 
 import javafx.fxml.FXML;
-import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -16,8 +15,7 @@ public class PacManView extends Group {
     private Image pacmanUpImage;
     private Image pacmanDownImage;
     private Image pacmanLeftImage;
-    private Image ghost1Image;
-    private Image ghost2Image;
+    private Image ghostImage;
     private Image blueGhostImage;
     private Image wallImage;
     private Image bigDotImage;
@@ -32,8 +30,7 @@ public class PacManView extends Group {
         this.pacmanUpImage = new Image(getClass().getResourceAsStream("/image/pacmanUp.gif"));
         this.pacmanDownImage = new Image(getClass().getResourceAsStream("/image/pacmanDown.gif"));
         this.pacmanLeftImage = new Image(getClass().getResourceAsStream("/image/pacmanLeft.gif"));
-        this.ghost1Image = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
-        this.ghost2Image = new Image(getClass().getResourceAsStream("/image/ghost2.gif"));
+        this.ghostImage = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
         this.blueGhostImage = new Image(getClass().getResourceAsStream("/image/blueghost.gif"));
         this.wallImage = new Image(getClass().getResourceAsStream("/image/wall.png"));
         this.bigDotImage = new Image(getClass().getResourceAsStream("/image/whitedot.png"));
@@ -70,16 +67,14 @@ public class PacManView extends Group {
             }
         }
 
-        for (int row = 0; row < this.rowCount; row++){
-            for (int column = 0; column < this.columnCount; column++){
+        for (int row = 0; row < this.rowCount; row++) {
+            for (int column = 0; column < this.columnCount; column++) {
                 PacManModel.CellValue value = model.getCellValue(row, column);
                 if (value == PacManModel.CellValue.WALL) {
                     this.cellViews[row][column].setImage(this.wallImage);
-                }
-                else if (value == PacManModel.CellValue.BIGDOT) {
+                } else if (value == PacManModel.CellValue.BIGDOT) {
                     this.cellViews[row][column].setImage(this.bigDotImage);
-                }
-                else if (value == PacManModel.CellValue.SMALLDOT) {
+                } else if (value == PacManModel.CellValue.SMALLDOT) {
                     this.cellViews[row][column].setImage(this.smallDotImage);
                 }
 
@@ -95,12 +90,14 @@ public class PacManView extends Group {
                     }
                 }
 
-                if (PacManModel.isGhostEatingMode() && (Controller.getGhostEatingModeCounter() == 6 || Controller.getGhostEatingModeCounter() == 4 || Controller.getGhostEatingModeCounter() == 2)) {
-                    if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
-                        this.cellViews[row][column].setImage(this.ghost1Image);
-                    }
-                    if (row == model.getGhost2Location().getX() && column == model.getGhost2Location().getY()) {
-                        this.cellViews[row][column].setImage(this.ghost2Image);
+                // Отображение всех привидений
+                for (Ghost ghost : model.getGhosts()) {
+                    if (row == ghost.getLocation().getX() && column == ghost.getLocation().getY()) {
+                        if (PacManModel.isGhostEatingMode()) {
+                            this.cellViews[row][column].setImage(this.blueGhostImage);
+                        } else {
+                            this.cellViews[row][column].setImage(this.ghostImage);
+                        }
                     }
                 }
 
@@ -116,22 +113,6 @@ public class PacManView extends Group {
                         } else if (botPacMan.getLastDirection() == PacManModel.Direction.DOWN) {
                             this.cellViews[row][column].setImage(this.botPacmanDownImage);
                         }
-                    }
-                }
-
-                if (PacManModel.isGhostEatingMode()) {
-                    if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
-                        this.cellViews[row][column].setImage(this.blueGhostImage);
-                    }
-                    if (row == model.getGhost2Location().getX() && column == model.getGhost2Location().getY()) {
-                        this.cellViews[row][column].setImage(this.blueGhostImage);
-                    }
-                } else {
-                    if (row == model.getGhost1Location().getX() && column == model.getGhost1Location().getY()) {
-                        this.cellViews[row][column].setImage(this.ghost1Image);
-                    }
-                    if (row == model.getGhost2Location().getX() && column == model.getGhost2Location().getY()) {
-                        this.cellViews[row][column].setImage(this.ghost2Image);
                     }
                 }
             }

@@ -1,11 +1,10 @@
 package my.snole.pacmannn;
 
+import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.geometry.Point2D;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.application.Platform;
@@ -14,28 +13,32 @@ import javafx.scene.layout.BorderPane;
 import java.util.Timer;
 import java.util.TimerTask;
 
+
 public class Controller implements EventHandler<KeyEvent> {
-    final private static double FRAMES_PER_SECOND = 5.0;
+    private static final double FRAMES_PER_SECOND = 5.0;
     @FXML private Label scoreLabel;
     @FXML private Label levelLabel;
     @FXML private Label gameOverLabel;
     @FXML private BorderPane borderPane;
     @FXML private Label timerLabel;
     @FXML private ComboBox<String> selectLvlCombo;
-    private static final int MOVE_INTERVAL = 6;
+    @FXML private RadioButton radio2Ghosts;
+    @FXML private RadioButton radio3Ghosts;
+    @FXML private RadioButton radio4Ghosts;
+    @FXML private Button addGhostButton;
+    private ToggleGroup ghostToggleGroup;
+    private Timer timer;
     private GameTimer gameTimer;
     private PacManView pacManView;
     private PacManModel pacManModel;
+    private boolean paused;
+    private boolean gameStarted;
+    public static int ghostEatingModeCounter;
     private static final String[] levelFiles = {
             "level1.txt",
             "level2.txt",
             "level3.txt"
     };
-
-    private Timer timer;
-    private static int ghostEatingModeCounter;
-    private boolean paused;
-    private boolean gameStarted;
 
     public Controller() {
         this.paused = false;
@@ -54,17 +57,22 @@ public class Controller implements EventHandler<KeyEvent> {
         startTimer();
         selectLvlCombo.getItems().addAll("Level 1", "Level 2", "Level 3");
         selectLvlCombo.setValue("Level 1");
+
+        // Set up the toggle group for ghost radio buttons
+        ghostToggleGroup = new ToggleGroup();
+        radio2Ghosts.setToggleGroup(ghostToggleGroup);
+        radio3Ghosts.setToggleGroup(ghostToggleGroup);
+        radio4Ghosts.setToggleGroup(ghostToggleGroup);
+        radio2Ghosts.setSelected(true); // Default selection
     }
 
     private void startTimer() {
-        this.timer = new java.util.Timer();
+        this.timer = new Timer();
         TimerTask timerTask = new TimerTask() {
             public void run() {
-                Platform.runLater(new Runnable() {
-                    public void run() {
-                        if (gameStarted) {
-                            update(pacManModel.getCurrentDirection());
-                        }
+                Platform.runLater(() -> {
+                    if (gameStarted) {
+                        update(pacManModel.getCurrentDirection());
                     }
                 });
             }
@@ -122,7 +130,8 @@ public class Controller implements EventHandler<KeyEvent> {
 
     private void restartGame() {
         pause();
-        this.pacManModel.startNewGame();
+        int initialGhosts = getSelectedGhostCount();
+        this.pacManModel.startNewGame(initialGhosts);
         this.gameOverLabel.setText("");
         paused = false;
         gameStarted = true;
@@ -180,9 +189,15 @@ public class Controller implements EventHandler<KeyEvent> {
     }
 
     @FXML
-    private void handleAddBotsButton () {
+    private void handleAddBotsButton() {
         pacManModel.addBots(1);
         gameStarted = true;
+        borderPane.requestFocus();
+    }
+
+    @FXML
+    private void handleAddGhostButton(ActionEvent event) {
+        pacManModel.addGhost();
         borderPane.requestFocus();
     }
 
@@ -216,5 +231,10 @@ public class Controller implements EventHandler<KeyEvent> {
                 pause();
             }
         }
+    }
+
+    private int getSelectedGhostCount() {
+        RadioButton selectedRadioButton = (RadioButton) ghostToggleGroup.getSelectedToggle();
+        return Integer.parseInt(selectedRadioButton.getText());
     }
 }

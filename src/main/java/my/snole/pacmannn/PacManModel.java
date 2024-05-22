@@ -1,6 +1,6 @@
 package my.snole.pacmannn;
-
 import javafx.geometry.Point2D;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.*;
@@ -27,17 +27,12 @@ public class PacManModel {
     private List<Ghost> ghosts;
     private static Direction lastDirection;
     private static Direction currentDirection;
-
-    public List<BotPacMan> getBots() {
-        return botPacMen;
-    }
-
     private List<BotPacMan> botPacMen;
     private static final int GHOST_EATING_MODE_DURATION = 3;
     private static int ghostEatingModeCounter;
 
     public PacManModel() {
-        this.startNewGame();
+        this.startNewGame(2); // Default to 2 ghosts
     }
 
     public void initializeLevel(String fileName) {
@@ -67,10 +62,7 @@ public class PacManModel {
         int row = 0;
         int pacmanRow = 0;
         int pacmanColumn = 0;
-        int ghost1Row = 0;
-        int ghost1Column = 0;
-        int ghost2Row = 0;
-        int ghost2Column = 0;
+        List<Point2D> ghostHomes = new ArrayList<>();
 
         for (String line : lines) {
             int column = 0;
@@ -88,15 +80,9 @@ public class PacManModel {
                         thisValue = CellValue.BIGDOT;
                         dotCount++;
                     }
-                    case "1" -> {
+                    case "1", "2", "3", "4" -> {
                         thisValue = CellValue.GHOST1HOME;
-                        ghost1Row = row;
-                        ghost1Column = column;
-                    }
-                    case "2" -> {
-                        thisValue = CellValue.GHOST2HOME;
-                        ghost2Row = row;
-                        ghost2Column = column;
+                        ghostHomes.add(new Point2D(row, column));
                     }
                     case "P" -> {
                         thisValue = CellValue.PACMANHOME;
@@ -112,20 +98,20 @@ public class PacManModel {
         }
 
         Point2D pacmanLocation = new Point2D(pacmanRow, pacmanColumn);
-        Point2D ghost1Location = new Point2D(ghost1Row, ghost1Column);
-        Point2D ghost2Location = new Point2D(ghost2Row, ghost2Column);
-
         this.pacman = new PacMan(pacmanLocation, new Point2D(0, 0));
         this.ghosts = new ArrayList<>();
-        this.ghosts.add(new Ghost(ghost1Location, new Point2D(-1, 0)));
-        this.ghosts.add(new Ghost(ghost2Location, new Point2D(-1, 0)));
         this.botPacMen = new ArrayList<>();
 
         currentDirection = Direction.NONE;
         lastDirection = Direction.NONE;
+
+        // Add initial ghosts based on the homes found
+        for (Point2D home : ghostHomes) {
+            this.ghosts.add(new Ghost(home, new Point2D(-1, 0)));
+        }
     }
 
-    public void startNewGame() {
+    public void startNewGame(int initialGhosts) {
         gameOver = false;
         youWon = false;
         ghostEatingMode = false;
@@ -135,8 +121,13 @@ public class PacManModel {
         score = 0;
         level = 1;
         this.initializeLevel(Controller.getLevelFile(0));
-    }
 
+        // Add initial ghosts
+        this.ghosts.clear();
+        for (int i = 0; i < initialGhosts; i++) {
+            this.addGhost();
+        }
+    }
 
     public void startNextLevel() {
         if (this.isLevelComplete()) {
@@ -147,8 +138,7 @@ public class PacManModel {
             ghostEatingMode = false;
             try {
                 this.initializeLevel(Controller.getLevelFile(level - 1));
-            }
-            catch (ArrayIndexOutOfBoundsException e) {
+            } catch (ArrayIndexOutOfBoundsException e) {
                 youWon = true;
                 gameOver = true;
                 level--;
@@ -243,7 +233,6 @@ public class PacManModel {
             }
         }
     }
-
 
     public void sendGhostHome(Ghost ghost) {
         for (int row = 0; row < this.rowCount; row++) {
@@ -360,6 +349,10 @@ public class PacManModel {
         return botPacMen.get(0);
     }
 
+    public List<BotPacMan> getBots() {
+        return botPacMen;
+    }
+
     public void addBots(int count) {
         for (int i = 0; i < count; i++) {
             Point2D botLocation = findBotSpawnLocation();
@@ -379,7 +372,22 @@ public class PacManModel {
         return new Point2D(1, 1);
     }
 
+    public void addGhost() {
+        for (int row = 0; row < getRowCount(); row++) {
+            for (int column = 0; column < getColumnCount(); column++) {
+                if (grid[row][column] == CellValue.EMPTY) {
+                    this.ghosts.add(new Ghost(new Point2D(row, column), new Point2D(-1, 0)));
+                    return;
+                }
+            }
+        }
+    }
+
     public void setGameOver(boolean gameOver) {
         PacManModel.gameOver = gameOver;
+    }
+
+    public List<Ghost> getGhosts() {
+        return ghosts;
     }
 }
