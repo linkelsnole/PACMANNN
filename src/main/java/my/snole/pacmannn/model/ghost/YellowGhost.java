@@ -4,8 +4,8 @@ import javafx.scene.image.Image;
 import my.snole.pacmannn.model.ghost.Ghost;
 
 public class YellowGhost extends Ghost {
-    public YellowGhost(Point2D location, Point2D velocity) {
-        super(location, velocity);
+    public YellowGhost(Point2D location, Point2D velocity, GhostManager ghostManager) {
+        super(location, velocity, ghostManager);
         this.image = new Image(getClass().getResourceAsStream("/image/yellowghost.gif"));
     }
 }

@@ -7,11 +7,12 @@ import my.snole.pacmannn.model.pacman.PacMan;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.lang.reflect.Constructor;
 import java.util.*;
 
 public class PacManModel {
     public enum CellValue {
-        EMPTY, SMALLDOT, BIGDOT, WALL, GHOST1HOME, GHOST2HOME, PACMANHOME
+        EMPTY, SMALLDOT, BIGDOT, WALL, GHOST1HOME, GHOST2HOME, GHOST3HOME, GHOST4HOME, PACMANHOME
     }
 
     public enum Direction {
@@ -70,7 +71,7 @@ public class PacManModel {
         int row = 0;
         int pacmanRow = 0;
         int pacmanColumn = 0;
-        List<Point2D> ghostHomes = new ArrayList<>();
+        Map<Integer, Point2D> ghostHomes = new HashMap<>();
 
         for (String line : lines) {
             int column = 0;
@@ -88,9 +89,21 @@ public class PacManModel {
                         thisValue = CellValue.BIGDOT;
                         dotCount++;
                     }
-                    case "1", "2", "3", "4" -> {
+                    case "1" -> {
                         thisValue = CellValue.GHOST1HOME;
-                        ghostHomes.add(new Point2D(row, column));
+                        ghostHomes.put(1, new Point2D(row, column));
+                    }
+                    case "2" -> {
+                        thisValue = CellValue.GHOST2HOME;
+                        ghostHomes.put(2, new Point2D(row, column));
+                    }
+                    case "3" -> {
+                        thisValue = CellValue.GHOST3HOME;
+                        ghostHomes.put(3, new Point2D(row, column));
+                    }
+                    case "4" -> {
+                        thisValue = CellValue.GHOST4HOME;
+                        ghostHomes.put(4, new Point2D(row, column));
                     }
                     case "P" -> {
                         thisValue = CellValue.PACMANHOME;
@@ -113,11 +126,29 @@ public class PacManModel {
         currentDirection = Direction.NONE;
         lastDirection = Direction.NONE;
 
-        // Add initial ghosts based on the homes found
-        for (Point2D home : ghostHomes) {
-            addGhost(home);
-        }
         this.ghostManager = new GhostManager(this.ghosts);  // Ensure GhostManager is properly initialized with the ghosts
+    }
+
+    private void addSpecificGhost(int ghostNumber, Point2D location) {
+        Ghost newGhost;
+        switch (ghostNumber) {
+            case 1:
+                newGhost = new RedGhost(location, new Point2D(-1, 0), this.ghostManager);
+                break;
+            case 2:
+                newGhost = new BlueGhost(location, new Point2D(-1, 0), this.ghostManager);
+                break;
+            case 3:
+                newGhost = new PinkGhost(location, new Point2D(-1, 0), this.ghostManager);
+                break;
+            case 4:
+                newGhost = new YellowGhost(location, new Point2D(-1, 0), this.ghostManager);
+                break;
+            default:
+                throw new IllegalArgumentException("Invalid ghost number: " + ghostNumber);
+        }
+        this.ghostManager.addGhost(newGhost);
+        System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
     }
 
     public void startNewGame(int initialGhosts) {
@@ -130,9 +161,25 @@ public class PacManModel {
         score = 0;
         level = 1;
         this.initializeLevel(Controller.getLevelFile(0));
-        this.ghostManager.getGhosts().clear();
-        for (int i = 0; i < initialGhosts; i++) {
-            this.addGhost();
+
+        this.ghostManager.getGhosts().clear(); // Очистим привидения перед добавлением новых
+        int ghostsAdded = 0;
+        for (int i = 1; i <= 4; i++) {
+            if (ghostsAdded >= initialGhosts) break;
+            for (int row = 0; row < getRowCount(); row++) {
+                for (int column = 0; column < getColumnCount(); column++) {
+                    CellValue cellValue = grid[row][column];
+                    if ((i == 1 && cellValue == CellValue.GHOST1HOME) ||
+                            (i == 2 && cellValue == CellValue.GHOST2HOME) ||
+                            (i == 3 && cellValue == CellValue.GHOST3HOME) ||
+                            (i == 4 && cellValue == CellValue.GHOST4HOME)) {
+                        addSpecificGhost(i, new Point2D(row, column));
+                        ghostsAdded++;
+                        break;
+                    }
+                }
+                if (ghostsAdded >= initialGhosts) break;
+            }
         }
     }
 
@@ -371,29 +418,68 @@ public class PacManModel {
     public void addGhost(Point2D location) {
         Ghost newGhost = createRandomGhost(location, new Point2D(-1, 0));
         this.ghostManager.addGhost(newGhost);
+        System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
     }
 
+
     public void addGhost() {
-        for (int row = 0; row < getRowCount(); row++) {
-            for (int column = 0; column < getColumnCount(); column++) {
-                if (grid[row][column] == CellValue.EMPTY) {
-                    Ghost newGhost = createRandomGhost(new Point2D(row, column), new Point2D(-1, 0));
-                    this.ghosts.add(newGhost);
-                    return;
+        List<Class<? extends Ghost>> ghostTypes = Arrays.asList(RedGhost.class, BlueGhost.class, PinkGhost.class, YellowGhost.class);
+        List<Class<? extends Ghost>> existingGhostTypes = new ArrayList<>();
+
+        for (Ghost ghost : this.ghosts) {
+            existingGhostTypes.add(ghost.getClass());
+        }
+
+        List<Class<? extends Ghost>> remainingGhostTypes = new ArrayList<>(ghostTypes);
+        remainingGhostTypes.removeAll(existingGhostTypes);
+
+        if (!remainingGhostTypes.isEmpty()) {
+            Collections.shuffle(remainingGhostTypes);
+            for (int row = 0; row < getRowCount(); row++) {
+                for (int column = 0; column < getColumnCount(); column++) {
+                    if (grid[row][column] == CellValue.EMPTY) {
+                        Point2D potentialLocation = new Point2D(row, column);
+                        boolean locationOccupied = false;
+                        for (Ghost ghost : this.ghosts) {
+                            if (ghost.getLocation().equals(potentialLocation)) {
+                                locationOccupied = true;
+                                break;
+                            }
+                        }
+                        if (!locationOccupied) {
+                            Ghost newGhost = createGhost(remainingGhostTypes.get(0), potentialLocation, new Point2D(-1, 0));
+                            this.ghosts.add(newGhost);
+                            System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + row + "," + column);
+                            return;
+                        }
+                    }
                 }
             }
+        } else {
+            System.out.println("No remaining ghost types to add.");
         }
     }
+
+    private Ghost createGhost(Class<? extends Ghost> ghostClass, Point2D location, Point2D velocity) {
+        try {
+            Constructor<? extends Ghost> constructor = ghostClass.getConstructor(Point2D.class, Point2D.class, GhostManager.class);
+            return constructor.newInstance(location, velocity, this.ghostManager);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new RedGhost(location, velocity, this.ghostManager);  // Default to RedGhost in case of error
+        }
+    }
+
 
     private Ghost createRandomGhost(Point2D location, Point2D velocity) {
         Random random = new Random();
         int ghostType = random.nextInt(4);
         switch (ghostType) {
-            case 0: return new RedGhost(location, velocity);
-            case 1: return new BlueGhost(location, velocity);
-            case 2: return new PinkGhost(location, velocity);
-            case 3: return new YellowGhost(location, velocity);
-            default: return new RedGhost(location, velocity);
+            case 0: return new RedGhost(location, velocity, this.ghostManager);
+            case 1: return new BlueGhost(location, velocity, this.ghostManager);
+            case 2: return new PinkGhost(location, velocity, this.ghostManager);
+            case 3: return new YellowGhost(location, velocity, this.ghostManager);
+            default: return new RedGhost(location, velocity, this.ghostManager);
         }
     }
 

@@ -132,6 +132,7 @@ public class Controller implements EventHandler<KeyEvent> {
     private void restartGame() {
         pause();
         int initialGhosts = getSelectedGhostCount();
+        System.out.println("Restarting game with " + initialGhosts + " ghosts.");
         this.pacManModel.startNewGame(initialGhosts);
         this.gameOverLabel.setText("");
         paused = false;

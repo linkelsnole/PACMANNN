@@ -1,4 +1,4 @@
-package my.snole.pacmannn.core;
+package my.snole.pacmannn;
 
 import javafx.application.Application;
 import javafx.application.Platform;

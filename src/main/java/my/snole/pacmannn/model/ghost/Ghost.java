@@ -2,8 +2,8 @@ package my.snole.pacmannn.model.ghost;
 
 import javafx.geometry.Point2D;
 import javafx.scene.image.Image;
-import my.snole.pacmannn.model.pacman.BotPacMan;
 import my.snole.pacmannn.core.PacManModel;
+import my.snole.pacmannn.model.pacman.BotPacMan;
 import my.snole.pacmannn.model.GameCharacter;
 
 import java.util.List;
@@ -12,13 +12,15 @@ import java.util.Random;
 public class Ghost extends GameCharacter {
     protected Image image;
     private int stepCounter;
-    private static final int SLOW_DOWN_FACTOR = 1;
+    private static final int SLOW_DOWN_FACTOR = 100000000;
     private boolean shouldMove;
+    private GhostManager ghostManager;
 
-    public Ghost(Point2D location, Point2D velocity) {
+    public Ghost(Point2D location, Point2D velocity, GhostManager ghostManager) {
         super(location, velocity);
         this.stepCounter = 0;
         this.shouldMove = true;
+        this.ghostManager = ghostManager;
     }
 
     @Override
@@ -29,17 +31,24 @@ public class Ghost extends GameCharacter {
             Point2D potentialLocation = this.location.add(potentialVelocity);
             potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
-            while (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL) {
+            // Проверка на столкновение со стеной
+            int attempts = 0;
+            while (attempts < 4 && (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL ||
+                    isAnotherGhostHere(potentialLocation))) {
                 int randomNum = generator.nextInt(4);
                 PacManModel.Direction direction = PacManModel.Direction.values()[randomNum];
                 potentialVelocity = changeVelocity(direction);
                 potentialLocation = this.location.add(potentialVelocity);
                 potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
+                attempts++;
             }
 
-            this.velocity = potentialVelocity;
-            this.location = potentialLocation;
-            System.out.println("Ghost moved to: " + this.location);
+            // Если не удалось найти направление без стены, привидение не двигается
+            if (attempts < 4) {
+                this.velocity = potentialVelocity;
+                this.location = potentialLocation;
+                System.out.println("Ghost moved to: " + this.location);
+            }
         }
         stepCounter++;
         if (stepCounter % SLOW_DOWN_FACTOR == 0) {
@@ -71,22 +80,37 @@ public class Ghost extends GameCharacter {
             potentialLocation = this.location.add(potentialVelocity);
             potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
-            while (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL) {
+            int attempts = 0;
+            while (attempts < 4 && (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL ||
+                    isAnotherGhostHere(potentialLocation))) {
                 int randomNum = generator.nextInt(4);
                 PacManModel.Direction direction = PacManModel.Direction.values()[randomNum];
                 potentialVelocity = changeVelocity(direction);
                 potentialLocation = this.location.add(potentialVelocity);
                 potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
+                attempts++;
             }
 
-            this.velocity = potentialVelocity;
-            this.location = potentialLocation;
-            System.out.println("Ghost moved towards character to: " + this.location);
+            // Если не удалось найти направление без стены, привидение не двигается
+            if (attempts < 4) {
+                this.velocity = potentialVelocity;
+                this.location = potentialLocation;
+                System.out.println("Ghost moved towards character to: " + this.location);
+            }
         }
         stepCounter++;
         if (stepCounter % SLOW_DOWN_FACTOR == 0) {
             shouldMove = !shouldMove;
         }
+    }
+
+    private boolean isAnotherGhostHere(Point2D location) {
+        for (Ghost ghost : ghostManager.getGhosts()) {
+            if (!ghost.equals(this) && ghost.getLocation().equals(location)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void moveTowardsPacmanOrBots(Point2D pacmanLocation, List<BotPacMan> bots, boolean ghostEatingMode, PacManModel.CellValue[][] grid) {
