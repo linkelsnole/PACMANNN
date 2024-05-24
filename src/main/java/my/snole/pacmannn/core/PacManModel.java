@@ -1,6 +1,7 @@
 package my.snole.pacmannn.core;
 
 import javafx.geometry.Point2D;
+import javafx.scene.image.Image;
 import my.snole.pacmannn.model.ghost.*;
 import my.snole.pacmannn.model.pacman.BotPacMan;
 import my.snole.pacmannn.model.pacman.PacMan;
@@ -33,16 +34,22 @@ public class PacManModel {
     private static Direction lastDirection;
     private static Direction currentDirection;
     private List<BotPacMan> botPacMen;
-    private static final int GHOST_EATING_MODE_DURATION = 3;
+    private static final int GHOST_EATING_MODE_DURATION = 10;
     private static int ghostEatingModeCounter;
     private GhostManager ghostManager;
     private Controller controller;
+    private final Map<Class<? extends Ghost>, Image> ghostImages;
 
     public PacManModel(Controller controller) {
         this.controller = controller;
         this.botPacMen = new ArrayList<>();
         this.ghosts = new ArrayList<>();
         this.ghostManager = new GhostManager(this.ghosts);
+        this.ghostImages = new HashMap<>();
+        this.ghostImages.put(RedGhost.class, new Image(getClass().getResourceAsStream("/image/redghost.gif")));
+        this.ghostImages.put(BlueGhost.class, new Image(getClass().getResourceAsStream("/image/blueghost1.gif")));
+        this.ghostImages.put(PinkGhost.class, new Image(getClass().getResourceAsStream("/image/pinkghost.gif")));
+        this.ghostImages.put(YellowGhost.class, new Image(getClass().getResourceAsStream("/image/yellowghost.gif")));
         this.initializeLevel(Controller.getLevelFile(0));
     }
 
@@ -117,7 +124,6 @@ public class PacManModel {
         this.ghostManager = new GhostManager(this.ghosts);  // Ensure GhostManager is properly initialized with the ghosts
     }
 
-
     public void initializeGhosts(int initialGhosts) {
         this.ghostManager.getGhosts().clear(); // Очистим привидения перед добавлением новых
         int ghostsAdded = 0;
@@ -140,25 +146,16 @@ public class PacManModel {
         }
     }
 
-
     private void addSpecificGhost(int ghostNumber, Point2D location) {
-        Ghost newGhost;
+        Class<? extends Ghost> ghostClass;
         switch (ghostNumber) {
-            case 1:
-                newGhost = new RedGhost(location, new Point2D(-1, 0), this.ghostManager);
-                break;
-            case 2:
-                newGhost = new BlueGhost(location, new Point2D(-1, 0), this.ghostManager);
-                break;
-            case 3:
-                newGhost = new PinkGhost(location, new Point2D(-1, 0), this.ghostManager);
-                break;
-            case 4:
-                newGhost = new YellowGhost(location, new Point2D(-1, 0), this.ghostManager);
-                break;
-            default:
-                throw new IllegalArgumentException("Invalid ghost number: " + ghostNumber);
+            case 1 -> ghostClass = RedGhost.class;
+            case 2 -> ghostClass = BlueGhost.class;
+            case 3 -> ghostClass = PinkGhost.class;
+            case 4 -> ghostClass = YellowGhost.class;
+            default -> throw new IllegalArgumentException("Invalid ghost number: " + ghostNumber);
         }
+        Ghost newGhost = createGhost(ghostClass, location, new Point2D(-1, 0));
         this.ghostManager.addGhost(newGhost);
         System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
     }
@@ -188,6 +185,7 @@ public class PacManModel {
                 this.initializeLevel(Controller.getLevelFile(level - 1));
                 int selectedGhostCount = controller.getSelectedGhostCount();
                 initializeGhosts(selectedGhostCount);
+                controller.autoNextLevel();
             } catch (ArrayIndexOutOfBoundsException e) {
                 youWon = true;
                 gameOver = true;
@@ -228,6 +226,9 @@ public class PacManModel {
             score += 50;
             ghostEatingMode = true;
             setGhostEatingModeCounter();
+            for (Ghost ghost : ghosts) {
+                ghost.changeImageToBlue();
+            }
         }
 
         // Обновление положения ботов и проверка на столкновение с едой
@@ -244,6 +245,9 @@ public class PacManModel {
                 score += 50;
                 ghostEatingMode = true;
                 setGhostEatingModeCounter();
+                for (Ghost ghost : ghosts) {
+                    ghost.changeImageToBlue();
+                }
             }
         }
 
@@ -262,6 +266,8 @@ public class PacManModel {
                 }
             }
         }
+
+        decrementGhostEatingModeCounter();
 
         if (this.isLevelComplete()) {
             pacman.setVelocity(new Point2D(0, 0));
@@ -345,11 +351,15 @@ public class PacManModel {
         ghostEatingModeCounter = GHOST_EATING_MODE_DURATION;
     }
 
-    public static void decrementGhostEatingModeCounter() {
+    public void decrementGhostEatingModeCounter() {
         if (ghostEatingModeCounter > 0) {
             ghostEatingModeCounter--;
             if (ghostEatingModeCounter == 0) {
                 ghostEatingMode = false;
+                for (Ghost ghost : ghosts) {
+                    ghost.resetImage(); // Сброс изображения привидения после завершения режима поедания
+                }
+                controller.updateView(); // Добавим вызов обновления представления
             }
         }
     }
@@ -397,6 +407,7 @@ public class PacManModel {
             Point2D botLocation = findBotSpawnLocation();
             BotPacMan bot = new BotPacMan(botLocation, new Point2D(0, 0));
             botPacMen.add(bot);
+            System.out.println("добавился бот");
         }
     }
 
@@ -417,66 +428,30 @@ public class PacManModel {
         System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
     }
 
-
-    public void addGhost() {
-        List<Class<? extends Ghost>> ghostTypes = Arrays.asList(RedGhost.class, BlueGhost.class, PinkGhost.class, YellowGhost.class);
-        List<Class<? extends Ghost>> existingGhostTypes = new ArrayList<>();
-
-        for (Ghost ghost : this.ghosts) {
-            existingGhostTypes.add(ghost.getClass());
-        }
-
-        List<Class<? extends Ghost>> remainingGhostTypes = new ArrayList<>(ghostTypes);
-        remainingGhostTypes.removeAll(existingGhostTypes);
-
-        if (!remainingGhostTypes.isEmpty()) {
-            Collections.shuffle(remainingGhostTypes);
-            for (int row = 0; row < getRowCount(); row++) {
-                for (int column = 0; column < getColumnCount(); column++) {
-                    if (grid[row][column] == CellValue.EMPTY) {
-                        Point2D potentialLocation = new Point2D(row, column);
-                        boolean locationOccupied = false;
-                        for (Ghost ghost : this.ghosts) {
-                            if (ghost.getLocation().equals(potentialLocation)) {
-                                locationOccupied = true;
-                                break;
-                            }
-                        }
-                        if (!locationOccupied) {
-                            Ghost newGhost = createGhost(remainingGhostTypes.get(0), potentialLocation, new Point2D(-1, 0));
-                            this.ghosts.add(newGhost);
-                            System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + row + "," + column);
-                            return;
-                        }
-                    }
-                }
-            }
-        } else {
-            System.out.println("No remaining ghost types to add.");
-        }
-    }
-
     private Ghost createGhost(Class<? extends Ghost> ghostClass, Point2D location, Point2D velocity) {
         try {
-            Constructor<? extends Ghost> constructor = ghostClass.getConstructor(Point2D.class, Point2D.class, GhostManager.class);
-            return constructor.newInstance(location, velocity, this.ghostManager);
+            Constructor<? extends Ghost> constructor = ghostClass.getConstructor(Point2D.class, Point2D.class, GhostManager.class, Image.class);
+            Image defaultImage = ghostImages.get(ghostClass);
+            return constructor.newInstance(location, velocity, this.ghostManager, defaultImage);
         } catch (Exception e) {
             e.printStackTrace();
-            return new RedGhost(location, velocity, this.ghostManager);  // Default to RedGhost in case of error
+            Image defaultImage = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
+            return new RedGhost(location, velocity, this.ghostManager, defaultImage);  // Default to RedGhost in case of error
         }
     }
-
 
     private Ghost createRandomGhost(Point2D location, Point2D velocity) {
         Random random = new Random();
         int ghostType = random.nextInt(4);
+        Class<? extends Ghost> ghostClass;
         switch (ghostType) {
-            case 0: return new RedGhost(location, velocity, this.ghostManager);
-            case 1: return new BlueGhost(location, velocity, this.ghostManager);
-            case 2: return new PinkGhost(location, velocity, this.ghostManager);
-            case 3: return new YellowGhost(location, velocity, this.ghostManager);
-            default: return new RedGhost(location, velocity, this.ghostManager);
+            case 0 -> ghostClass = RedGhost.class;
+            case 1 -> ghostClass = BlueGhost.class;
+            case 2 -> ghostClass = PinkGhost.class;
+            case 3 -> ghostClass = YellowGhost.class;
+            default -> ghostClass = RedGhost.class;
         }
+        return createGhost(ghostClass, location, velocity);
     }
 
     public void setGameOver(boolean gameOver) {

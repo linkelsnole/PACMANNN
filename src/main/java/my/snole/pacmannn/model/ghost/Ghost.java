@@ -11,16 +11,27 @@ import java.util.Random;
 
 public class Ghost extends GameCharacter {
     protected Image image;
+    private Image defaultImage;
     private int stepCounter;
     private static final int SLOW_DOWN_FACTOR = 100000000;
     private boolean shouldMove;
     private GhostManager ghostManager;
 
-    public Ghost(Point2D location, Point2D velocity, GhostManager ghostManager) {
+    public Ghost(Point2D location, Point2D velocity, GhostManager ghostManager, Image defaultImage) {
         super(location, velocity);
         this.stepCounter = 0;
         this.shouldMove = true;
         this.ghostManager = ghostManager;
+        this.defaultImage = defaultImage;
+        this.image = defaultImage;
+    }
+
+    public void changeImageToBlue() {
+        this.image = new Image(getClass().getResourceAsStream("/image/blueghost.gif"));
+    }
+
+    public void resetImage() {
+        this.image = defaultImage;
     }
 
     @Override
@@ -130,5 +141,6 @@ public class Ghost extends GameCharacter {
     public Image getImage() {
         return image;
     }
+
 }
 

@@ -54,7 +54,7 @@ public class Controller implements EventHandler<KeyEvent> {
         this.pacManView.setColumnCount(pacManModel.getColumnCount());
         this.borderPane.setCenter(this.pacManView);
         this.update(PacManModel.Direction.NONE);
-        ghostEatingModeCounter = 25;
+        ghostEatingModeCounter = 10;
         startTimer();
         selectLvlCombo.getItems().addAll("Level 1", "Level 2", "Level 3");
         selectLvlCombo.setValue("Level 1");
@@ -137,10 +137,11 @@ public class Controller implements EventHandler<KeyEvent> {
         this.gameOverLabel.setText("");
         paused = false;
         gameStarted = true;
-        ghostEatingModeCounter = 25;
+        ghostEatingModeCounter = 10;
         gameTimer.reset();
         gameTimer.start();
         borderPane.requestFocus();
+        selectLvlCombo.setValue("Level 1");
         startTimer();
         update(PacManModel.Direction.NONE);
     }
@@ -161,7 +162,7 @@ public class Controller implements EventHandler<KeyEvent> {
     }
 
     public static void setGhostEatingModeCounter() {
-        ghostEatingModeCounter = 25;
+        ghostEatingModeCounter = 10;
     }
 
     public static int getGhostEatingModeCounter() {
@@ -207,7 +208,7 @@ public class Controller implements EventHandler<KeyEvent> {
 
     @FXML
     private void handleAddGhostButton(ActionEvent event) {
-        pacManModel.addGhost();
+//        pacManModel.addGhost();
         borderPane.requestFocus();
     }
 
@@ -251,4 +252,9 @@ public class Controller implements EventHandler<KeyEvent> {
         RadioButton selectedRadioButton = (RadioButton) ghostToggleGroup.getSelectedToggle();
         return Integer.parseInt(selectedRadioButton.getText());
     }
+
+    public void updateView() {
+        pacManView.update(pacManModel);
+    }
+
 }
