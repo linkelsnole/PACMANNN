@@ -36,6 +36,7 @@ public class PacManModel {
     private static final int GHOST_EATING_MODE_DURATION = 3;
     private static int ghostEatingModeCounter;
     private GhostManager ghostManager;
+    private Controller controller = new Controller();
 
     public PacManModel() {
         this.botPacMen = new ArrayList<>();
@@ -71,8 +72,6 @@ public class PacManModel {
         int row = 0;
         int pacmanRow = 0;
         int pacmanColumn = 0;
-        Map<Integer, Point2D> ghostHomes = new HashMap<>();
-
         for (String line : lines) {
             int column = 0;
             Scanner lineScanner = new Scanner(line);
@@ -89,22 +88,10 @@ public class PacManModel {
                         thisValue = CellValue.BIGDOT;
                         dotCount++;
                     }
-                    case "1" -> {
-                        thisValue = CellValue.GHOST1HOME;
-                        ghostHomes.put(1, new Point2D(row, column));
-                    }
-                    case "2" -> {
-                        thisValue = CellValue.GHOST2HOME;
-                        ghostHomes.put(2, new Point2D(row, column));
-                    }
-                    case "3" -> {
-                        thisValue = CellValue.GHOST3HOME;
-                        ghostHomes.put(3, new Point2D(row, column));
-                    }
-                    case "4" -> {
-                        thisValue = CellValue.GHOST4HOME;
-                        ghostHomes.put(4, new Point2D(row, column));
-                    }
+                    case "1" -> thisValue = CellValue.GHOST1HOME;
+                    case "2" -> thisValue = CellValue.GHOST2HOME;
+                    case "3" -> thisValue = CellValue.GHOST3HOME;
+                    case "4" -> thisValue = CellValue.GHOST4HOME;
                     case "P" -> {
                         thisValue = CellValue.PACMANHOME;
                         pacmanRow = row;
@@ -128,6 +115,30 @@ public class PacManModel {
 
         this.ghostManager = new GhostManager(this.ghosts);  // Ensure GhostManager is properly initialized with the ghosts
     }
+
+
+    public void initializeGhosts(int initialGhosts) {
+        this.ghostManager.getGhosts().clear(); // Очистим привидения перед добавлением новых
+        int ghostsAdded = 0;
+        for (int i = 1; i <= 4; i++) {
+            if (ghostsAdded >= initialGhosts) break;
+            for (int row = 0; row < getRowCount(); row++) {
+                for (int column = 0; column < getColumnCount(); column++) {
+                    CellValue cellValue = grid[row][column];
+                    if ((i == 1 && cellValue == CellValue.GHOST1HOME) ||
+                            (i == 2 && cellValue == CellValue.GHOST2HOME) ||
+                            (i == 3 && cellValue == CellValue.GHOST3HOME) ||
+                            (i == 4 && cellValue == CellValue.GHOST4HOME)) {
+                        addSpecificGhost(i, new Point2D(row, column));
+                        ghostsAdded++;
+                        break;
+                    }
+                }
+                if (ghostsAdded >= initialGhosts) break;
+            }
+        }
+    }
+
 
     private void addSpecificGhost(int ghostNumber, Point2D location) {
         Ghost newGhost;
@@ -162,25 +173,7 @@ public class PacManModel {
         level = 1;
         this.initializeLevel(Controller.getLevelFile(0));
 
-        this.ghostManager.getGhosts().clear(); // Очистим привидения перед добавлением новых
-        int ghostsAdded = 0;
-        for (int i = 1; i <= 4; i++) {
-            if (ghostsAdded >= initialGhosts) break;
-            for (int row = 0; row < getRowCount(); row++) {
-                for (int column = 0; column < getColumnCount(); column++) {
-                    CellValue cellValue = grid[row][column];
-                    if ((i == 1 && cellValue == CellValue.GHOST1HOME) ||
-                            (i == 2 && cellValue == CellValue.GHOST2HOME) ||
-                            (i == 3 && cellValue == CellValue.GHOST3HOME) ||
-                            (i == 4 && cellValue == CellValue.GHOST4HOME)) {
-                        addSpecificGhost(i, new Point2D(row, column));
-                        ghostsAdded++;
-                        break;
-                    }
-                }
-                if (ghostsAdded >= initialGhosts) break;
-            }
-        }
+        initializeGhosts(initialGhosts);
     }
 
     public void startNextLevel() {
@@ -192,6 +185,7 @@ public class PacManModel {
             ghostEatingMode = false;
             try {
                 this.initializeLevel(Controller.getLevelFile(level - 1));
+
             } catch (ArrayIndexOutOfBoundsException e) {
                 youWon = true;
                 gameOver = true;

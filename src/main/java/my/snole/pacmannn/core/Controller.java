@@ -209,6 +209,7 @@ public class Controller implements EventHandler<KeyEvent> {
         if (selectedLevel != null) {
             int levelIndex = Integer.parseInt(selectedLevel.replace("Level ", "")) - 1;
             pacManModel.initializeLevel(Controller.getLevelFile(levelIndex));
+            pacManModel.initializeGhosts(getSelectedGhostCount());
             pacManView.update(pacManModel);
             borderPane.requestFocus();
         }
@@ -223,6 +224,7 @@ public class Controller implements EventHandler<KeyEvent> {
                 levelIndex++;
                 selectLvlCombo.setValue("Level " + (levelIndex + 1));
                 pacManModel.initializeLevel(Controller.getLevelFile(levelIndex));
+                pacManModel.initializeGhosts(getSelectedGhostCount());
                 pacManView.update(pacManModel);
                 borderPane.requestFocus();
             } else {
@@ -235,7 +237,7 @@ public class Controller implements EventHandler<KeyEvent> {
         }
     }
 
-    private int getSelectedGhostCount() {
+    public int getSelectedGhostCount() {
         RadioButton selectedRadioButton = (RadioButton) ghostToggleGroup.getSelectedToggle();
         return Integer.parseInt(selectedRadioButton.getText());
     }
