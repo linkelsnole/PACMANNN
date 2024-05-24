@@ -33,8 +33,7 @@ public class Ghost extends GameCharacter {
 
             // Проверка на столкновение со стеной
             int attempts = 0;
-            while (attempts < 4 && (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL ||
-                    isAnotherGhostHere(potentialLocation))) {
+            while (attempts < 4 && grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL) {
                 int randomNum = generator.nextInt(4);
                 PacManModel.Direction direction = PacManModel.Direction.values()[randomNum];
                 potentialVelocity = changeVelocity(direction);
@@ -81,8 +80,7 @@ public class Ghost extends GameCharacter {
             potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
             int attempts = 0;
-            while (attempts < 4 && (grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL ||
-                    isAnotherGhostHere(potentialLocation))) {
+            while (attempts < 4 && grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL) {
                 int randomNum = generator.nextInt(4);
                 PacManModel.Direction direction = PacManModel.Direction.values()[randomNum];
                 potentialVelocity = changeVelocity(direction);
@@ -102,15 +100,6 @@ public class Ghost extends GameCharacter {
         if (stepCounter % SLOW_DOWN_FACTOR == 0) {
             shouldMove = !shouldMove;
         }
-    }
-
-    private boolean isAnotherGhostHere(Point2D location) {
-        for (Ghost ghost : ghostManager.getGhosts()) {
-            if (!ghost.equals(this) && ghost.getLocation().equals(location)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public void moveTowardsPacmanOrBots(Point2D pacmanLocation, List<BotPacMan> bots, boolean ghostEatingMode, PacManModel.CellValue[][] grid) {
@@ -142,3 +131,4 @@ public class Ghost extends GameCharacter {
         return image;
     }
 }
+

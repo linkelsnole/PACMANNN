@@ -48,7 +48,7 @@ public class Controller implements EventHandler<KeyEvent> {
 
     public void initialize() {
         gameTimer = new GameTimer(timerLabel);
-        this.pacManModel = new PacManModel();
+        this.pacManModel = new PacManModel(this);
         this.pacManView = new PacManView();
         this.pacManView.setRowCount(pacManModel.getRowCount());
         this.pacManView.setColumnCount(pacManModel.getColumnCount());
@@ -181,6 +181,14 @@ public class Controller implements EventHandler<KeyEvent> {
         gameTimer.start();
         gameStarted = true;
         borderPane.requestFocus();
+        pacManModel.startNewGame(getSelectedGhostCount());
+    }
+
+    @FXML
+    private void handleResumeButtonAction() {
+        gameTimer.start();
+        gameStarted = true;
+        borderPane.requestFocus();
     }
 
     @FXML
@@ -236,7 +244,9 @@ public class Controller implements EventHandler<KeyEvent> {
             }
         }
     }
-
+    public void autoNextLevel() {
+        Platform.runLater(() -> handleNextLevelButtonAction());
+    }
     public int getSelectedGhostCount() {
         RadioButton selectedRadioButton = (RadioButton) ghostToggleGroup.getSelectedToggle();
         return Integer.parseInt(selectedRadioButton.getText());

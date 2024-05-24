@@ -36,13 +36,14 @@ public class PacManModel {
     private static final int GHOST_EATING_MODE_DURATION = 3;
     private static int ghostEatingModeCounter;
     private GhostManager ghostManager;
-    private Controller controller = new Controller();
+    private Controller controller;
 
-    public PacManModel() {
+    public PacManModel(Controller controller) {
+        this.controller = controller;
         this.botPacMen = new ArrayList<>();
         this.ghosts = new ArrayList<>();
         this.ghostManager = new GhostManager(this.ghosts);
-        this.startNewGame(2); // Default to 2 ghosts
+        this.initializeLevel(Controller.getLevelFile(0));
     }
 
     public void initializeLevel(String fileName) {
@@ -185,7 +186,8 @@ public class PacManModel {
             ghostEatingMode = false;
             try {
                 this.initializeLevel(Controller.getLevelFile(level - 1));
-
+                int selectedGhostCount = controller.getSelectedGhostCount();
+                initializeGhosts(selectedGhostCount);
             } catch (ArrayIndexOutOfBoundsException e) {
                 youWon = true;
                 gameOver = true;
