@@ -11,35 +11,45 @@ import java.io.FileNotFoundException;
 import java.lang.reflect.Constructor;
 import java.util.*;
 
+/**
+ * Класс PacManModel - модель игры Pac-Man.
+ * Управляет состоянием игры: положение Pac-Man, привидений,бота Pac-Man; картой.
+ */
 public class PacManModel {
+    // Перечисление для обозначения значений ячеек в сетке
     public enum CellValue {
         EMPTY, SMALLDOT, BIGDOT, WALL, GHOST1HOME, GHOST2HOME, GHOST3HOME, GHOST4HOME, PACMANHOME
     }
 
+    // Перечисление для обозначения направлений движения
     public enum Direction {
         UP, DOWN, LEFT, RIGHT, NONE
     }
 
-    private int rowCount;
-    private int columnCount;
-    private CellValue[][] grid;
-    public static int score;
-    private int level;
-    public static int dotCount;
-    private static boolean gameOver;
-    private static boolean youWon;
-    public static boolean ghostEatingMode;
-    private PacMan pacman;
-    private List<Ghost> ghosts;
-    private static Direction lastDirection;
-    private static Direction currentDirection;
-    private List<BotPacMan> botPacMen;
-    private static final int GHOST_EATING_MODE_DURATION = 10;
-    private static int ghostEatingModeCounter;
-    private GhostManager ghostManager;
+    private int rowCount; // количество строк в сетке
+    private int columnCount; // количество колонок в сетке
+    private CellValue[][] grid; // двумерный массив, представляющий игровую сетку
+    public static int score; // текущий счет игры
+    private int level; // текущий уровень игры
+    public static int dotCount; // количество оставшихся точек в игре
+    private static boolean gameOver; // флаг окончания игры
+    private static boolean youWon; // флаг победы
+    public static boolean ghostEatingMode; // флаг режима поедания привидений
+    private PacMan pacman; // объект PacMan
+    private List<Ghost> ghosts; // список привидений
+    private static Direction lastDirection; // последнее направление движения PacMan
+    private static Direction currentDirection; // текущее направление движения PacMan
+    private List<BotPacMan> botPacMen; // список ботов PacMan
+    private static final int GHOST_EATING_MODE_DURATION = 10; // длительность режима поедания привидений
+    private static int ghostEatingModeCounter; // счетчик режима поедания привидений
+    private GhostManager ghostManager; // менеджер привидений
     private Controller controller;
-    private final Map<Class<? extends Ghost>, Image> ghostImages;
+    private final Map<Class<? extends Ghost>, Image> ghostImages; // карта изображений привидений
 
+    /**
+     * Конструктор для инициализации модели игры.
+     * @param controller контроллер игры
+     */
     public PacManModel(Controller controller) {
         this.controller = controller;
         this.botPacMen = new ArrayList<>();
@@ -53,6 +63,10 @@ public class PacManModel {
         this.initializeLevel(Controller.getLevelFile(0));
     }
 
+    /**
+     * Метод для инициализации уровня игры.
+     * @param fileName имя файла с уровнем
+     */
     public void initializeLevel(String fileName) {
         rowCount = 0;
         columnCount = 0;
@@ -73,27 +87,27 @@ public class PacManModel {
             rowCount++;
         }
         if (rowCount > 0) {
-            columnCount = lines.get(0).split(" ").length;
+            columnCount = lines.get(0).split(" ").length; // определяем количество колонок по первой строке
         }
 
-        grid = new CellValue[rowCount][columnCount];
-        int row = 0;
-        int pacmanRow = 0;
-        int pacmanColumn = 0;
+        grid = new CellValue[rowCount][columnCount]; // инициализация сетки уровня
+        int row = 0; // начальная строка
+        int pacmanRow = 0; // строка для PacMan
+        int pacmanColumn = 0; // колонка для PacMan
         for (String line : lines) {
             int column = 0;
             Scanner lineScanner = new Scanner(line);
             while (lineScanner.hasNext()) {
-                String value = lineScanner.next();
-                CellValue thisValue;
+                String value = lineScanner.next(); // считываем значение ячейки
+                CellValue thisValue; // переменная для хранения значения ячейки
                 switch (value) {
-                    case "W" -> thisValue = CellValue.WALL;
+                    case "W" -> thisValue = CellValue.WALL; // стена
                     case "S" -> {
-                        thisValue = CellValue.SMALLDOT;
+                        thisValue = CellValue.SMALLDOT; // маленькая точка
                         dotCount++;
                     }
                     case "B" -> {
-                        thisValue = CellValue.BIGDOT;
+                        thisValue = CellValue.BIGDOT; // большая точка
                         dotCount++;
                     }
                     case "1" -> thisValue = CellValue.GHOST1HOME;
@@ -101,19 +115,19 @@ public class PacManModel {
                     case "3" -> thisValue = CellValue.GHOST3HOME;
                     case "4" -> thisValue = CellValue.GHOST4HOME;
                     case "P" -> {
-                        thisValue = CellValue.PACMANHOME;
+                        thisValue = CellValue.PACMANHOME; // дом PacMan
                         pacmanRow = row;
                         pacmanColumn = column;
                     }
                     default -> thisValue = CellValue.EMPTY;
                 }
-                grid[row][column] = thisValue;
-                column++;
+                grid[row][column] = thisValue; // заполняем сетку значениями ячеек
+                column++; // переходим к следующей колонке
             }
-            row++;
+            row++; // переходим к следующей строке
         }
 
-        Point2D pacmanLocation = new Point2D(pacmanRow, pacmanColumn);
+        Point2D pacmanLocation = new Point2D(pacmanRow, pacmanColumn); // начальная позиция PacMan
         this.pacman = new PacMan(pacmanLocation, new Point2D(0, 0));
         this.ghosts = new ArrayList<>();
         this.botPacMen = new ArrayList<>();
@@ -121,11 +135,16 @@ public class PacManModel {
         currentDirection = Direction.NONE;
         lastDirection = Direction.NONE;
 
-        this.ghostManager = new GhostManager(this.ghosts);  // Ensure GhostManager is properly initialized with the ghosts
+        this.ghostManager = new GhostManager(this.ghosts); // инициализация менеджера привидений
     }
 
+
+    /**
+     * Метод для инициализации привидений на уровне.
+     * @param initialGhosts количество привидений для инициализации
+     */
     public void initializeGhosts(int initialGhosts) {
-        this.ghostManager.getGhosts().clear(); // Очистим привидения перед добавлением новых
+        this.ghostManager.getGhosts().clear();
         int ghostsAdded = 0;
         for (int i = 1; i <= 4; i++) {
             if (ghostsAdded >= initialGhosts) break;
@@ -146,6 +165,11 @@ public class PacManModel {
         }
     }
 
+    /**
+     * Добавление конкретного привидения на указанную позицию.
+     * @param ghostNumber номер привидения
+     * @param location позиция привидения
+     */
     private void addSpecificGhost(int ghostNumber, Point2D location) {
         Class<? extends Ghost> ghostClass;
         switch (ghostNumber) {
@@ -160,6 +184,10 @@ public class PacManModel {
         System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
     }
 
+    /**
+     * Начало новой игры.
+     * @param initialGhosts количество начальных привидений
+     */
     public void startNewGame(int initialGhosts) {
         gameOver = false;
         youWon = false;
@@ -174,6 +202,9 @@ public class PacManModel {
         initializeGhosts(initialGhosts);
     }
 
+    /**
+     * Переход на следующий уровень.
+     */
     public void startNextLevel() {
         if (this.isLevelComplete()) {
             this.level++;
@@ -194,6 +225,10 @@ public class PacManModel {
         }
     }
 
+    /**
+     * Выполняет один шаг игры.
+     * @param direction направление движения Pac-Man
+     */
     public void step(Direction direction) {
         if (direction == null) {
             direction = Direction.NONE;
@@ -214,6 +249,10 @@ public class PacManModel {
 
         this.moveGhosts();
 
+        if (checkPacManCollisions()) {
+            return;
+        }
+
         CellValue pacmanLocationCellValue = grid[(int) pacman.getLocation().getX()][(int) pacman.getLocation().getY()];
         if (pacmanLocationCellValue == CellValue.SMALLDOT) {
             grid[(int) pacman.getLocation().getX()][(int) pacman.getLocation().getY()] = CellValue.EMPTY;
@@ -228,6 +267,7 @@ public class PacManModel {
             setGhostEatingModeCounter();
             for (Ghost ghost : ghosts) {
                 ghost.changeImageToBlue();
+                ghost.reverseDirection();
             }
         }
 
@@ -247,10 +287,28 @@ public class PacManModel {
                 setGhostEatingModeCounter();
                 for (Ghost ghost : ghosts) {
                     ghost.changeImageToBlue();
+                    ghost.reverseDirection();
                 }
             }
         }
 
+        if (checkPacManCollisions()) {
+            return;
+        }
+
+        decrementGhostEatingModeCounter();
+
+        if (this.isLevelComplete()) {
+            pacman.setVelocity(new Point2D(0, 0));
+            startNextLevel();
+        }
+    }
+
+    /**
+     * Проверяет столкновения Pac-Man с привидениями.
+     * @return true, если произошло столкновение и игра окончена
+     */
+    private boolean checkPacManCollisions() {
         if (ghostEatingMode) {
             for (Ghost ghost : ghosts) {
                 if (pacman.getLocation().equals(ghost.getLocation())) {
@@ -263,22 +321,24 @@ public class PacManModel {
                 if (pacman.getLocation().equals(ghost.getLocation())) {
                     gameOver = true;
                     pacman.setVelocity(new Point2D(0, 0));
+                    return true;
                 }
             }
         }
-
-        decrementGhostEatingModeCounter();
-
-        if (this.isLevelComplete()) {
-            pacman.setVelocity(new Point2D(0, 0));
-            startNextLevel();
-        }
+        return false;
     }
 
+    /**
+     * Перемещение привидений.
+     */
     public void moveGhosts() {
         ghostManager.moveGhosts(pacman.getLocation(), botPacMen, ghostEatingMode, grid);
     }
 
+    /**
+     * Отправляет привидение на его начальную позицию.
+     * @param ghost привидение
+     */
     public void sendGhostHome(Ghost ghost) {
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
@@ -290,6 +350,98 @@ public class PacManModel {
         }
     }
 
+    /**
+     * Уменьшает счетчик режима поедания привидений.
+     */
+    public void decrementGhostEatingModeCounter() {
+        if (ghostEatingModeCounter > 0) {
+            ghostEatingModeCounter--;
+            if (ghostEatingModeCounter == 0) {
+                ghostEatingMode = false;
+                for (Ghost ghost : ghosts) {
+                    ghost.resetImage(); // Сброс изображения привидения после завершения режима поедания
+                }
+                controller.updateView(); // Обновление view
+            }
+        }
+    }
+
+    /**
+     * Добавляет ботов Pac-Man.
+     * @param count количество ботов
+     */
+    public void addBots(int count) {
+        for (int i = 0; i < count; i++) {
+            Point2D botLocation = findBotSpawnLocation();
+            BotPacMan bot = new BotPacMan(botLocation, new Point2D(0, 0));
+            botPacMen.add(bot);
+            System.out.println("добавился бот");
+        }
+    }
+
+    /**
+     * Находит позицию для появления бота.
+     * @return позиция для появления бота
+     */
+    private Point2D findBotSpawnLocation() {
+        for (int row = 0; row < getRowCount(); row++) {
+            for (int column = 0; column < getColumnCount(); column++) {
+                if (getCellValue(row, column) == CellValue.PACMANHOME) {
+                    return new Point2D(row, column);
+                }
+            }
+        }
+        return new Point2D(1, 1);
+    }
+
+    /**
+     * Добавляет привидение на указанную позицию.
+     * @param location позиция привидения
+     */
+    public void addGhost(Point2D location) {
+        Ghost newGhost = createRandomGhost(location, new Point2D(-1, 0));
+        this.ghostManager.addGhost(newGhost);
+        System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
+    }
+
+    /**
+     * Создает привидение указанного класса.
+     * @param ghostClass класс привидения
+     * @param location позиция привидения
+     * @param velocity скорость привидения
+     * @return объект привидения
+     */
+    private Ghost createGhost(Class<? extends Ghost> ghostClass, Point2D location, Point2D velocity) {
+        try {
+            Constructor<? extends Ghost> constructor = ghostClass.getConstructor(Point2D.class, Point2D.class, GhostManager.class, Image.class);
+            Image defaultImage = ghostImages.get(ghostClass);
+            return constructor.newInstance(location, velocity, this.ghostManager, defaultImage);
+        } catch (Exception e) {
+            e.printStackTrace();
+            Image defaultImage = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
+            return new RedGhost(location, velocity, this.ghostManager, defaultImage);  // возвращает красное привидение
+        }
+    }
+
+    /**
+     * Создает привидение случайного типа.
+     * @param location позиция привидения
+     * @param velocity скорость привидения
+     * @return объект привидения
+     */
+    private Ghost createRandomGhost(Point2D location, Point2D velocity) {
+        Random random = new Random();
+        int ghostType = random.nextInt(4);
+        Class<? extends Ghost> ghostClass;
+        switch (ghostType) {
+            case 0 -> ghostClass = RedGhost.class;
+            case 1 -> ghostClass = BlueGhost.class;
+            case 2 -> ghostClass = PinkGhost.class;
+            case 3 -> ghostClass = YellowGhost.class;
+            default -> ghostClass = RedGhost.class;
+        }
+        return createGhost(ghostClass, location, velocity);
+    }
     public boolean isLevelComplete() {
         return this.dotCount == 0;
     }
@@ -306,6 +458,9 @@ public class PacManModel {
         return youWon;
     }
 
+    /**
+     * ! Геттеры и сеттеры
+     */
     public int getScore() {
         return score;
     }
@@ -351,18 +506,6 @@ public class PacManModel {
         ghostEatingModeCounter = GHOST_EATING_MODE_DURATION;
     }
 
-    public void decrementGhostEatingModeCounter() {
-        if (ghostEatingModeCounter > 0) {
-            ghostEatingModeCounter--;
-            if (ghostEatingModeCounter == 0) {
-                ghostEatingMode = false;
-                for (Ghost ghost : ghosts) {
-                    ghost.resetImage(); // Сброс изображения привидения после завершения режима поедания
-                }
-                controller.updateView(); // Добавим вызов обновления представления
-            }
-        }
-    }
 
     public static int getGhostEatingModeCounter() {
         return ghostEatingModeCounter;
@@ -376,89 +519,22 @@ public class PacManModel {
         return pacman.getLocation();
     }
 
-    public Point2D getGhost1Location() {
-        return ghosts.get(0).getLocation();
-    }
-
-    public Point2D getGhost2Location() {
-        return ghosts.get(1).getLocation();
-    }
-
-    public Point2D getBotPacmanLocation() {
-        if (botPacMen.isEmpty()) {
-            return new Point2D(0, 0);
-        }
-        return botPacMen.get(0).getLocation();
-    }
-
-    public BotPacMan getBotPacMan() {
-        if (botPacMen.isEmpty()) {
-            return null;
-        }
-        return botPacMen.get(0);
-    }
-
     public List<BotPacMan> getBots() {
         return botPacMen;
-    }
-
-    public void addBots(int count) {
-        for (int i = 0; i < count; i++) {
-            Point2D botLocation = findBotSpawnLocation();
-            BotPacMan bot = new BotPacMan(botLocation, new Point2D(0, 0));
-            botPacMen.add(bot);
-            System.out.println("добавился бот");
-        }
-    }
-
-    private Point2D findBotSpawnLocation() {
-        for (int row = 0; row < getRowCount(); row++) {
-            for (int column = 0; column < getColumnCount(); column++) {
-                if (getCellValue(row, column) == CellValue.PACMANHOME) {
-                    return new Point2D(row, column);
-                }
-            }
-        }
-        return new Point2D(1, 1);
-    }
-
-    public void addGhost(Point2D location) {
-        Ghost newGhost = createRandomGhost(location, new Point2D(-1, 0));
-        this.ghostManager.addGhost(newGhost);
-        System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
-    }
-
-    private Ghost createGhost(Class<? extends Ghost> ghostClass, Point2D location, Point2D velocity) {
-        try {
-            Constructor<? extends Ghost> constructor = ghostClass.getConstructor(Point2D.class, Point2D.class, GhostManager.class, Image.class);
-            Image defaultImage = ghostImages.get(ghostClass);
-            return constructor.newInstance(location, velocity, this.ghostManager, defaultImage);
-        } catch (Exception e) {
-            e.printStackTrace();
-            Image defaultImage = new Image(getClass().getResourceAsStream("/image/redghost.gif"));
-            return new RedGhost(location, velocity, this.ghostManager, defaultImage);  // Default to RedGhost in case of error
-        }
-    }
-
-    private Ghost createRandomGhost(Point2D location, Point2D velocity) {
-        Random random = new Random();
-        int ghostType = random.nextInt(4);
-        Class<? extends Ghost> ghostClass;
-        switch (ghostType) {
-            case 0 -> ghostClass = RedGhost.class;
-            case 1 -> ghostClass = BlueGhost.class;
-            case 2 -> ghostClass = PinkGhost.class;
-            case 3 -> ghostClass = YellowGhost.class;
-            default -> ghostClass = RedGhost.class;
-        }
-        return createGhost(ghostClass, location, velocity);
     }
 
     public void setGameOver(boolean gameOver) {
         PacManModel.gameOver = gameOver;
     }
 
+    public void setLevel(int level) {
+        this.level = level;
+    }
     public List<Ghost> getGhosts() {
         return ghosts;
+    }
+
+    public static void setYouWon(boolean youWon) {
+        PacManModel.youWon = youWon;
     }
 }

@@ -8,6 +8,8 @@ import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 import my.snole.pacmannn.core.Controller;
 
+import java.sql.SQLException;
+
 /**
  * Sets up the controller, loads the fxml file, and runs the application.
  */
@@ -27,6 +29,11 @@ public class Main extends Application {
         root.requestFocus();
 
         primaryStage.setOnCloseRequest(event -> {
+            try {
+                controller.database.close();
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
             Platform.exit();
             System.exit(0);
         });

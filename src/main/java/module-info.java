@@ -1,6 +1,7 @@
 module my.snole.pacmannn {
     requires javafx.controls;
     requires javafx.fxml;
+    requires java.sql;
 
 
     opens my.snole.pacmannn to javafx.fxml;
