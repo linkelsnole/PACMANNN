@@ -4,8 +4,7 @@ import javafx.geometry.Point2D;
 import my.snole.pacmannn.core.PacManModel;
 
 /**
- * Абстрактный класс, представляющий игрового персонажа.
- * Содержит общие свойства и методы, которые могут быть использованы различными персонажами.
+ * Абстрактный класс, представляющий игрового персонажа
  */
 public abstract class GameCharacter {
     protected Point2D location;
@@ -53,12 +52,6 @@ public abstract class GameCharacter {
         this.velocity = velocity;
     }
 
-    /**
-     * Абстрактный метод для перемещения персонажа.
-     * Должен быть реализован в подклассах
-     * @param grid игровое поле
-     */
-    public abstract void move(PacManModel.CellValue[][] grid);
 
     /**
      * Метод для обновления местоположения персонажа, если он выходит за границы экрана.

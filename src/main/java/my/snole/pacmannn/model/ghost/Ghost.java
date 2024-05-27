@@ -55,37 +55,7 @@ public class Ghost extends GameCharacter {
      * Движение привидения.
      * @param grid игровая сетка
      */
-    @Override
-    public void move(PacManModel.CellValue[][] grid) {
-        if (shouldMove) {
-            Random generator = new Random();
-            Point2D potentialVelocity = this.velocity;
-            Point2D potentialLocation = this.location.add(potentialVelocity);
-            potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
-            // Проверка на столкновение со стеной
-            int attempts = 0;
-            while (attempts < 4 && grid[(int) potentialLocation.getX()][(int) potentialLocation.getY()] == PacManModel.CellValue.WALL) {
-                int randomNum = generator.nextInt(4); // выбираем случайное направление
-                PacManModel.Direction direction = PacManModel.Direction.values()[randomNum];
-                potentialVelocity = changeVelocity(direction);
-                potentialLocation = this.location.add(potentialVelocity);
-                potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
-                attempts++;
-            }
-
-            // Если не удалось найти направление без стены, привидение не двигается
-            if (attempts < 4) {
-                this.velocity = potentialVelocity;
-                this.location = potentialLocation;
-                System.out.println("Ghost moved to: " + this.location);
-            }
-        }
-        stepCounter++;
-        if (stepCounter % SLOW_DOWN_FACTOR == 0) {
-            shouldMove = !shouldMove;
-        }
-    }
 
     /**
      * Движение привидения в сторону цели.

@@ -10,9 +10,7 @@ import my.snole.pacmannn.core.Controller;
 
 import java.sql.SQLException;
 
-/**
- * Sets up the controller, loads the fxml file, and runs the application.
- */
+
 public class Main extends Application {
 
     @Override

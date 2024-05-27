@@ -27,7 +27,7 @@ public class BotPacMan extends PacMan {
     public void move(PacManModel.CellValue[][] grid, List<Ghost> ghosts, List<BotPacMan> bots) {
         Point2D closestFood = findClosestFood(location, grid); // Находим ближайшую еду
 
-        if (isGhostNearby(location, ghosts, AVOID_GHOST_RADIUS)) {
+        if (isGhostNearby(location, ghosts, AVOID_GHOST_RADIUS, grid)) {
             // Логика избегания привидений
             moveAwayFromGhosts(grid, ghosts, bots);
         } else if (closestFood != null) {
@@ -48,13 +48,13 @@ public class BotPacMan extends PacMan {
      * @param radius радиус проверки
      * @return true, если привидение находится в радиусе, иначе false
      */
-    private boolean isGhostNearby(Point2D location, List<Ghost> ghosts, double radius) {
+    private boolean isGhostNearby(Point2D location, List<Ghost> ghosts, double radius, PacManModel.CellValue[][] grid) {
         for (Ghost ghost : ghosts) {
-            if (location.distance(ghost.getLocation()) <= radius) {
-                return true; // Если привидение находится в радиусе
+            if (location.distance(ghost.getLocation()) <= radius && hasLineOfSight(location, ghost.getLocation(), grid)) {
+                return true; // Если привидение находится в радиусе и нет стены между ними
             }
         }
-        return false; // Если привидений в радиусе нет
+        return false; // Если привидений в радиусе нет или они за стеной
     }
 
     /**
@@ -77,7 +77,7 @@ public class BotPacMan extends PacMan {
         // Перебираем возможные направления, чтобы найти доступный путь
         for (Point2D direction : possibleDirections) {
             Point2D newLocation = location.add(direction);
-            if (isValidMove(newLocation, grid, bots) && !isGhostNearby(newLocation, ghosts, 1.0)) {
+            if (isValidMove(newLocation, grid, bots) && !isGhostNearby(newLocation, ghosts, 1.0, grid)) {
                 moveInDirection(grid, direction, ghosts, bots); // Двигаемся в найденном направлении
                 return;
             }
@@ -122,7 +122,7 @@ public class BotPacMan extends PacMan {
         Point2D potentialLocation = location.add(direction);
         potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
 
-        if (isValidMove(potentialLocation, grid, bots) && !isGhostNearby(potentialLocation, ghosts, 1.0)) {
+        if (isValidMove(potentialLocation, grid, bots) && !isGhostNearby(potentialLocation, ghosts, 1.0, grid)) {
             this.velocity = direction;
             this.location = potentialLocation;
             updateLastDirection();
@@ -136,7 +136,7 @@ public class BotPacMan extends PacMan {
             for (Point2D dir : alternativeDirections) {
                 potentialLocation = location.add(dir);
                 potentialLocation = setGoingOffscreenNewLocation(potentialLocation, grid.length, grid[0].length);
-                if (isValidMove(potentialLocation, grid, bots) && !isGhostNearby(potentialLocation, ghosts, 1.0)) {
+                if (isValidMove(potentialLocation, grid, bots) && !isGhostNearby(potentialLocation, ghosts, 1.0, grid)) {
                     this.velocity = dir;
                     this.location = potentialLocation;
                     updateLastDirection();
@@ -196,7 +196,7 @@ public class BotPacMan extends PacMan {
                 Point2D neighborLocation = currentNode.getLocation().add(direction);
                 neighborLocation = setGoingOffscreenNewLocation(neighborLocation, grid.length, grid[0].length);
 
-                if (isValidMove(neighborLocation, grid, bots) && !isGhostNearby(neighborLocation, ghosts, 1.0)) {
+                if (isValidMove(neighborLocation, grid, bots) && !isGhostNearby(neighborLocation, ghosts, 1.0, grid)) {
                     double tentativeG = currentNode.getG() + 1;
                     Node neighborNode = allNodes.getOrDefault(neighborLocation, new Node(neighborLocation));
                     if (tentativeG < neighborNode.getG()) {
@@ -287,7 +287,7 @@ public class BotPacMan extends PacMan {
         );
         Collections.shuffle(possibleDirections);
         for (Point2D direction : possibleDirections) {
-            if (isValidMove(location.add(direction), grid, bots) && !isGhostNearby(location.add(direction), ghosts, 1.0)) {
+            if (isValidMove(location.add(direction), grid, bots) && !isGhostNearby(location.add(direction), ghosts, 1.0, grid)) {
                 moveInDirection(grid, direction, ghosts, bots); // Передаем ghosts
                 return;
             }

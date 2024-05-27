@@ -18,10 +18,6 @@ public class PacMan extends GameCharacter {
         super(location, velocity); // Вызов конструктора суперкласса
     }
 
-    @Override
-    public void move(PacManModel.CellValue[][] grid) {
-        // Пакман двигается в соответствии с направлением, установленным контроллером
-    }
 
     /**
      * Метод для движения Pac-Man в указанном направлении.
