@@ -26,7 +26,7 @@ public class PacMan extends GameCharacter {
      */
     public void move(PacManModel.Direction direction, PacManModel.CellValue[][] grid) {
         if (direction == null) {
-            direction = PacManModel.Direction.NONE; // Если направление не задано, устанавливаем NONE
+            direction = PacManModel.Direction.NONE;
         }
 
         Point2D potentialVelocity = changeVelocity(direction); // Изменяем скорость в соответствии с направлением

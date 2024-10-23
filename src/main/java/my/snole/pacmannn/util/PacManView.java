@@ -66,12 +66,12 @@ public class PacManView extends Group {
             for (int row = 0; row < this.rowCount; row++) {
                 for (int column = 0; column < this.columnCount; column++) {
                     ImageView imageView = new ImageView();
-                    imageView.setX((double)column * CELL_WIDTH); // Устанавливает X координату для изображения
-                    imageView.setY((double)row * CELL_WIDTH); // Устанавливает Y координату для изображения
-                    imageView.setFitWidth(CELL_WIDTH); // Устанавливает ширину изображения
-                    imageView.setFitHeight(CELL_WIDTH); // Устанавливает высоту изображения
+                    imageView.setX((double)column * CELL_WIDTH); // устанавливает X координату для изображения
+                    imageView.setY((double)row * CELL_WIDTH); // устанавливает Y координату для изображения
+                    imageView.setFitWidth(CELL_WIDTH); // устанавливает ширину изображения
+                    imageView.setFitHeight(CELL_WIDTH); // устанавливает высоту изображения
                     this.cellViews[row][column] = imageView;
-                    this.getChildren().add(imageView); // Добавляет ImageView в группу
+                    this.getChildren().add(imageView); // добавляет ImageView в группу
                 }
             }
         }
@@ -84,14 +84,14 @@ public class PacManView extends Group {
     public void update(PacManModel model) {
         assert model.getRowCount() == this.rowCount && model.getColumnCount() == this.columnCount;
 
-        // Очистка изображений клеток
+        // очистка изображений клеток
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
                 this.cellViews[row][column].setImage(null);
             }
         }
 
-        // Обновление изображений клеток в соответствии с моделью
+        // обновление изображений клеток в соответствии с моделью
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
                 PacManModel.CellValue value = model.getCellValue(row, column);

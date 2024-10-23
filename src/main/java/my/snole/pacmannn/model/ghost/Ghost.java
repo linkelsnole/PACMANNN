@@ -118,8 +118,8 @@ public class Ghost extends GameCharacter {
      * @param grid игровая сетка
      */
     public void moveTowardsPacmanOrBots(Point2D pacmanLocation, List<BotPacMan> bots, boolean ghostEatingMode, PacManModel.CellValue[][] grid) {
-        Point2D closestTarget = pacmanLocation; // ближайшая цель - Pac-Man
-        double closestDistance = this.location.distance(pacmanLocation); // расстояние до Pac-Man
+        Point2D closestTarget = pacmanLocation; // ближайшая цель - пакман
+        double closestDistance = this.location.distance(pacmanLocation); // расстояние до пакмана
 
         for (BotPacMan bot : bots) {
             double distance = this.location.distance(bot.getLocation());

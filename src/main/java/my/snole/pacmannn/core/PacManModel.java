@@ -506,7 +506,6 @@ public class PacManModel {
         ghostEatingModeCounter = GHOST_EATING_MODE_DURATION;
     }
 
-
     public static int getGhostEatingModeCounter() {
         return ghostEatingModeCounter;
     }
@@ -527,6 +526,27 @@ public class PacManModel {
         PacManModel.gameOver = gameOver;
     }
 
+    public void addGhost() {
+        Point2D location = findGhostSpawnLocation();
+        Ghost newGhost = createRandomGhost(location, new Point2D(-1, 0));
+        this.ghostManager.addGhost(newGhost);
+        System.out.println("Added new ghost: " + newGhost.getClass().getSimpleName() + " at " + location);
+    }
+
+    private Point2D findGhostSpawnLocation() {
+        List<Point2D> spawnLocations = new ArrayList<>();
+        for (int row = 0; row < rowCount; row++) {
+            for (int column = 0; column < columnCount; column++) {
+                if (grid[row][column] == CellValue.GHOST1HOME ||
+                        grid[row][column] == CellValue.GHOST2HOME ||
+                        grid[row][column] == CellValue.GHOST3HOME ||
+                        grid[row][column] == CellValue.GHOST4HOME) {
+                    spawnLocations.add(new Point2D(row, column));
+                }
+            }
+        }
+        return spawnLocations.isEmpty() ? new Point2D(0, 0) : spawnLocations.get(new Random().nextInt(spawnLocations.size()));
+    }
     public void setLevel(int level) {
         this.level = level;
     }

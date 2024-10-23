@@ -33,12 +33,15 @@ public class Controller implements EventHandler<KeyEvent> {
     @FXML private RadioButton radio3Ghosts;
     @FXML private RadioButton radio4Ghosts;
     @FXML private Button addGhostButton;
+    @FXML private  Button resumeButton;
+    @FXML private Button startButton;
     private ToggleGroup ghostToggleGroup;
     private Timer timer;
     public Database database;
     private GameTimer gameTimer;
     private PacManView pacManView;
     private PacManModel pacManModel;
+    private Button stopButton;
     private boolean paused;
     private boolean gameStarted;
     public static int ghostEatingModeCounter;
@@ -79,12 +82,12 @@ public class Controller implements EventHandler<KeyEvent> {
         selectLvlCombo.getItems().addAll("Level 1", "Level 2", "Level 3");
         selectLvlCombo.setValue("Level 1");
 
-        // Настройка группы переключателей для выбора количества привидений
         ghostToggleGroup = new ToggleGroup();
         radio2Ghosts.setToggleGroup(ghostToggleGroup);
         radio3Ghosts.setToggleGroup(ghostToggleGroup);
         radio4Ghosts.setToggleGroup(ghostToggleGroup);
-        radio2Ghosts.setSelected(true); // Выбор по умолчанию
+        radio2Ghosts.setSelected(true);
+        resumeButton.setDisable(true);
     }
 
     /**
@@ -228,12 +231,14 @@ public class Controller implements EventHandler<KeyEvent> {
         gameStarted = true;
         borderPane.requestFocus();
         pacManModel.startNewGame(getSelectedGhostCount());
+        startButton.setDisable(true);
     }
 
     @FXML
     private void handleResumeButtonAction() {
         gameTimer.start();
         gameStarted = true;
+        resumeButton.setDisable(true);
         borderPane.requestFocus();
     }
 
@@ -241,6 +246,7 @@ public class Controller implements EventHandler<KeyEvent> {
     private void handleStopButtonAction() {
         gameTimer.stop();
         gameStarted = false;
+        resumeButton.setDisable(false);
         borderPane.requestFocus();
     }
 
@@ -253,7 +259,7 @@ public class Controller implements EventHandler<KeyEvent> {
 
     @FXML
     private void handleAddGhostButton(ActionEvent event) {
-        // pacManModel.addGhost();
+         pacManModel.addGhost();
         borderPane.requestFocus();
     }
 

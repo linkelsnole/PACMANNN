@@ -10,12 +10,12 @@ import java.util.*;
  * Класс для управления ботами Pac-Man.
  */
 public class BotPacMan extends PacMan {
-    private PacManModel.Direction lastDirection; // Последнее направление движения
-    private static final double AVOID_GHOST_RADIUS = 3.0; // Радиус избегания привидений
+    private PacManModel.Direction lastDirection; // последнее направление движения
+    private static final double AVOID_GHOST_RADIUS = 3.0; // радиус избегания привидений
 
     public BotPacMan(Point2D location, Point2D velocity) {
         super(location, velocity);
-        this.lastDirection = PacManModel.Direction.NONE; // Инициализация последнего направления как NONE
+        this.lastDirection = PacManModel.Direction.NONE; // инициализация последнего направления как NONE
     }
 
     /**
@@ -28,13 +28,13 @@ public class BotPacMan extends PacMan {
         Point2D closestFood = findClosestFood(location, grid); // Находим ближайшую еду
 
         if (isGhostNearby(location, ghosts, AVOID_GHOST_RADIUS, grid)) {
-            // Логика избегания привидений
+            // логика избегания привидений
             moveAwayFromGhosts(grid, ghosts, bots);
         } else if (closestFood != null) {
-            // Логика для поиска пути к еде с избеганием привидений
+            // логика для поиска пути к еде с избеганием привидений
             moveTowardsFoodWithAStar(grid, closestFood, ghosts, bots);
         } else {
-            // Случайное движение в направлении еды, если нет ближайшей еды или путь заблокирован
+            // случайное движение в направлении еды, если нет ближайшей еды или путь заблокирован
             moveRandomly(grid, ghosts, bots);
         }
 
@@ -51,10 +51,10 @@ public class BotPacMan extends PacMan {
     private boolean isGhostNearby(Point2D location, List<Ghost> ghosts, double radius, PacManModel.CellValue[][] grid) {
         for (Ghost ghost : ghosts) {
             if (location.distance(ghost.getLocation()) <= radius && hasLineOfSight(location, ghost.getLocation(), grid)) {
-                return true; // Если привидение находится в радиусе и нет стены между ними
+                return true; // если привидение находится в радиусе и нет стены между ними
             }
         }
-        return false; // Если привидений в радиусе нет или они за стеной
+        return false; // если привидений в радиусе нет или они за стеной
     }
 
     /**
@@ -64,7 +64,7 @@ public class BotPacMan extends PacMan {
      * @param bots список ботов Pac-Man
      */
     private void moveAwayFromGhosts(PacManModel.CellValue[][] grid, List<Ghost> ghosts, List<BotPacMan> bots) {
-        Point2D oppositeDirection = calculateOppositeDirection(ghosts); // Вычисляем противоположное направление
+        Point2D oppositeDirection = calculateOppositeDirection(ghosts); //  противоположное направление
 
         List<Point2D> possibleDirections = Arrays.asList(
                 new Point2D(Math.signum(oppositeDirection.getX()), 0),
@@ -74,16 +74,16 @@ public class BotPacMan extends PacMan {
                 new Point2D(0, -Math.signum(oppositeDirection.getY()))
         );
 
-        // Перебираем возможные направления, чтобы найти доступный путь
+        // перебираем возможные направления, чтобы найти доступный путь
         for (Point2D direction : possibleDirections) {
             Point2D newLocation = location.add(direction);
             if (isValidMove(newLocation, grid, bots) && !isGhostNearby(newLocation, ghosts, 1.0, grid)) {
-                moveInDirection(grid, direction, ghosts, bots); // Двигаемся в найденном направлении
+                moveInDirection(grid, direction, ghosts, bots);
                 return;
             }
         }
 
-        // Если нет допустимых направлений, ищем случайное направление
+        // если нет допустимых направлений, ищем случайное направление
         moveRandomly(grid, ghosts, bots);
     }
 
@@ -93,8 +93,8 @@ public class BotPacMan extends PacMan {
      * @return направление в виде Point2D
      */
     private Point2D calculateOppositeDirection(List<Ghost> ghosts) {
-        Point2D oppositeDirection = new Point2D(0, 0); // Инициализация начального значения
-        double minDistance = Double.MAX_VALUE; // Инициализация минимального расстояния максимальным значением
+        Point2D oppositeDirection = new Point2D(0, 0); // инициализация начального значения
+        double minDistance = Double.MAX_VALUE;
 
         for (Ghost ghost : ghosts) {
             double distance = location.distance(ghost.getLocation());
@@ -220,7 +220,7 @@ public class BotPacMan extends PacMan {
      * @return эвристическое значение
      */
     private double heuristic(Point2D a, Point2D b) {
-        return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY()); // Манхэттенское расстояние
+        return Math.abs(a.getX() - b.getX()) + Math.abs(a.getY() - b.getY()); // манхэттенское расстояние
     }
 
     /**
