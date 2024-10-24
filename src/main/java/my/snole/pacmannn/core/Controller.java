@@ -122,23 +122,10 @@ public class Controller implements EventHandler<KeyEvent> {
             this.pacManView.update(pacManModel);
             this.scoreLabel.setText(String.format("Score: %d", this.pacManModel.getScore()));
             this.levelLabel.setText(String.format("Level: %d", this.pacManModel.getLevel()));
-            if (pacManModel.isGameOver()) {
-                this.gameOverLabel.setText("GAME OVER");
-                pause();
-                gameTimer.stop();
-                saveScoreToDB();
-            }
-            if (pacManModel.isYouWon()) {
-                this.gameOverLabel.setText("YOU WON!");
-                gameTimer.stop();
-                saveScoreToDB();
-            }
-            if (pacManModel.isGhostEatingMode()) {
-                ghostEatingModeCounter--;
-            }
-            if (ghostEatingModeCounter == 0 && pacManModel.isGhostEatingMode()) {
-                pacManModel.setGhostEatingMode(false);
-            }
+
+            checkGameState(); // Проверка состояния игры после обновления
+            
+            checkGhostEatingMode();
         }
     }
 
@@ -293,6 +280,8 @@ public class Controller implements EventHandler<KeyEvent> {
                 selectLvlCombo.setValue("Level " + (levelIndex + 1));
                 pacManModel.initializeLevel(Controller.getLevelFile(levelIndex));
                 pacManModel.initializeGhosts(getSelectedGhostCount());
+                int selectedGhostCount = getSelectedGhostCount();  // Логика остается в контроллере
+                pacManModel.startNextLevel(selectedGhostCount);
                 pacManView.update(pacManModel);
                 pacManModel.setLevel(levelIndex + 1);
                 borderPane.requestFocus();
@@ -342,5 +331,30 @@ public class Controller implements EventHandler<KeyEvent> {
         } catch (SQLException e) {
             e.printStackTrace();
         }
+    }
+
+    public void checkGameState() {
+        if (pacManModel.isLevelComplete()) {
+            handleNextLevelButtonAction();  // Переход на следующий уровень
+        } else if (pacManModel.isGameOver()) {
+            displayGameOver();
+        } else if (pacManModel.isYouWon()) {
+            displayVictory();
+        }
+    }
+
+    public void checkGhostEatingMode() {
+        pacManModel.decrementGhostEatingModeCounter();
+        updateView();  // Обновляем view вручную после проверки режима поедания
+    }
+
+    private void displayGameOver() {
+        gameOverLabel.setText("GAME OVER");
+        gameTimer.stop();  // Останавливаем таймер
+    }
+
+    private void displayVictory() {
+        gameOverLabel.setText("YOU WON!");
+        gameTimer.stop();  // Останавливаем таймер
     }
 }

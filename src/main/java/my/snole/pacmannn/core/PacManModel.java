@@ -43,7 +43,6 @@ public class PacManModel {
     private static final int GHOST_EATING_MODE_DURATION = 10; // длительность режима поедания привидений
     private static int ghostEatingModeCounter; // счетчик режима поедания привидений
     private GhostManager ghostManager; // менеджер привидений
-    private Controller controller;
     private final Map<Class<? extends Ghost>, Image> ghostImages; // карта изображений привидений
 
     /**
@@ -51,7 +50,6 @@ public class PacManModel {
      * @param controller контроллер игры
      */
     public PacManModel(Controller controller) {
-        this.controller = controller;
         this.botPacMen = new ArrayList<>();
         this.ghosts = new ArrayList<>();
         this.ghostManager = new GhostManager(this.ghosts);
@@ -205,7 +203,7 @@ public class PacManModel {
     /**
      * Переход на следующий уровень.
      */
-    public void startNextLevel() {
+    public void startNextLevel(int selectedGhostCount) {
         if (this.isLevelComplete()) {
             this.level++;
             rowCount = 0;
@@ -214,9 +212,7 @@ public class PacManModel {
             ghostEatingMode = false;
             try {
                 this.initializeLevel(Controller.getLevelFile(level - 1));
-                int selectedGhostCount = controller.getSelectedGhostCount();
                 initializeGhosts(selectedGhostCount);
-                controller.autoNextLevel();
             } catch (ArrayIndexOutOfBoundsException e) {
                 youWon = true;
                 gameOver = true;
@@ -224,6 +220,7 @@ public class PacManModel {
             }
         }
     }
+
 
     /**
      * Выполняет один шаг игры.
@@ -300,7 +297,8 @@ public class PacManModel {
 
         if (this.isLevelComplete()) {
             pacman.setVelocity(new Point2D(0, 0));
-            startNextLevel();
+            int selectedGhostCount = 2;
+            startNextLevel(selectedGhostCount);
         }
     }
 
@@ -361,7 +359,7 @@ public class PacManModel {
                 for (Ghost ghost : ghosts) {
                     ghost.resetImage(); // Сброс изображения привидения после завершения режима поедания
                 }
-                controller.updateView(); // Обновление view
+//                controller.updateView(); // Обновление view
             }
         }
     }
