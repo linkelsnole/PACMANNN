@@ -10,7 +10,6 @@ import my.snole.pacmannn.core.Controller;
 
 import java.sql.SQLException;
 
-
 public class Main extends Application {
 
     @Override

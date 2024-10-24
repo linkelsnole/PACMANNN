@@ -1,7 +1,6 @@
 package my.snole.pacmannn.model;
 
 import javafx.geometry.Point2D;
-import my.snole.pacmannn.core.PacManModel;
 
 /**
  * Абстрактный класс, представляющий игрового персонажа

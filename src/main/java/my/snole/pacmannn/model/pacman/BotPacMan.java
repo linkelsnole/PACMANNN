@@ -1,7 +1,7 @@
 package my.snole.pacmannn.model.pacman;
 
 import javafx.geometry.Point2D;
-import my.snole.pacmannn.core.PacManModel;
+import my.snole.pacmannn.model.PacManModel;
 import my.snole.pacmannn.model.ghost.Ghost;
 
 import java.util.*;

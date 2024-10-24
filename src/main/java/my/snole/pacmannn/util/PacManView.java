@@ -1,10 +1,10 @@
 package my.snole.pacmannn.util;
 
-import javafx.fxml.FXML;
+import javafx.geometry.Point2D;
 import javafx.scene.Group;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
-import my.snole.pacmannn.core.PacManModel;
+import my.snole.pacmannn.model.PacManModel;
 import my.snole.pacmannn.model.ghost.Ghost;
 import my.snole.pacmannn.model.pacman.BotPacMan;
 
@@ -15,9 +15,10 @@ import my.snole.pacmannn.model.pacman.BotPacMan;
 public class PacManView extends Group {
     public final static double CELL_WIDTH = 20.0; // Ширина одной клетки игрового поля
 
-    @FXML private int rowCount; // Количество строк игрового поля
-    @FXML private int columnCount; // Количество столбцов игрового поля
+    private int rowCount; // Количество строк игрового поля
+    private int columnCount; // Количество столбцов игрового поля
     private ImageView[][] cellViews; // Массив для хранения изображений клеток
+
     private Image pacmanRightImage; // Изображение Pac-Man, смотрящего направо
     private Image pacmanUpImage; // Изображение Pac-Man, смотрящего вверх
     private Image pacmanDownImage; // Изображение Pac-Man, смотрящего вниз
@@ -66,12 +67,12 @@ public class PacManView extends Group {
             for (int row = 0; row < this.rowCount; row++) {
                 for (int column = 0; column < this.columnCount; column++) {
                     ImageView imageView = new ImageView();
-                    imageView.setX((double)column * CELL_WIDTH); // устанавливает X координату для изображения
-                    imageView.setY((double)row * CELL_WIDTH); // устанавливает Y координату для изображения
-                    imageView.setFitWidth(CELL_WIDTH); // устанавливает ширину изображения
-                    imageView.setFitHeight(CELL_WIDTH); // устанавливает высоту изображения
+                    imageView.setX(column * CELL_WIDTH); // Устанавливает X координату для изображения
+                    imageView.setY(row * CELL_WIDTH); // Устанавливает Y координату для изображения
+                    imageView.setFitWidth(CELL_WIDTH); // Устанавливает ширину изображения
+                    imageView.setFitHeight(CELL_WIDTH); // Устанавливает высоту изображения
                     this.cellViews[row][column] = imageView;
-                    this.getChildren().add(imageView); // добавляет ImageView в группу
+                    this.getChildren().add(imageView); // Добавляет ImageView в группу
                 }
             }
         }
@@ -82,70 +83,87 @@ public class PacManView extends Group {
      * @param model текущая модель игры
      */
     public void update(PacManModel model) {
-        assert model.getRowCount() == this.rowCount && model.getColumnCount() == this.columnCount;
+        // Проверка соответствия размеров модели и представления
+        if (model.getRowCount() != this.rowCount || model.getColumnCount() != this.columnCount) {
+            this.rowCount = model.getRowCount();
+            this.columnCount = model.getColumnCount();
+            this.getChildren().clear();
+            initializeGrid();
+        }
 
-        // очистка изображений клеток
+        // Очистка изображений клеток
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
                 this.cellViews[row][column].setImage(null);
             }
         }
 
-        // обновление изображений клеток в соответствии с моделью
+        // Обновление изображений клеток в соответствии с моделью
         for (int row = 0; row < this.rowCount; row++) {
             for (int column = 0; column < this.columnCount; column++) {
                 PacManModel.CellValue value = model.getCellValue(row, column);
-                Image currentImage = this.cellViews[row][column].getImage();
-
                 Image newImage = null;
-                if (value == PacManModel.CellValue.WALL) {
-                    newImage = this.wallImage;
-                } else if (value == PacManModel.CellValue.BIGDOT) {
-                    newImage = this.bigDotImage;
-                } else if (value == PacManModel.CellValue.SMALLDOT) {
-                    newImage = this.smallDotImage;
+
+                switch (value) {
+                    case WALL:
+                        newImage = this.wallImage;
+                        break;
+                    case BIGDOT:
+                        newImage = this.bigDotImage;
+                        break;
+                    case SMALLDOT:
+                        newImage = this.smallDotImage;
+                        break;
+                    default:
+                        break;
                 }
 
-                // Обновление изображения Pac-Man
-                if (row == model.getPacmanLocation().getX() && column == model.getPacmanLocation().getY()) {
-                    if (PacManModel.getLastDirection() == PacManModel.Direction.RIGHT || PacManModel.getLastDirection() == PacManModel.Direction.NONE) {
-                        newImage = this.pacmanRightImage;
-                    } else if (PacManModel.getLastDirection() == PacManModel.Direction.LEFT) {
-                        newImage = this.pacmanLeftImage;
-                    } else if (PacManModel.getLastDirection() == PacManModel.Direction.UP) {
-                        newImage = this.pacmanUpImage;
-                    } else if (PacManModel.getLastDirection() == PacManModel.Direction.DOWN) {
-                        newImage = this.pacmanDownImage;
-                    }
-                }
-
-                // Отображение всех привидений
-                for (Ghost ghost : model.getGhosts()) {
-                    if (row == ghost.getLocation().getX() && column == ghost.getLocation().getY()) {
-                        newImage = ghost.getImage();
-                    }
-                }
-
-                // Отображение всех ботов PacMan
-                for (BotPacMan botPacMan : model.getBots()) {
-                    if (row == botPacMan.getLocation().getX() && column == botPacMan.getLocation().getY()) {
-                        if (botPacMan.getLastDirection() == PacManModel.Direction.RIGHT || botPacMan.getLastDirection() == PacManModel.Direction.NONE) {
-                            newImage = this.botPacmanRightImage;
-                        } else if (botPacMan.getLastDirection() == PacManModel.Direction.LEFT) {
-                            newImage = this.botPacmanLeftImage;
-                        } else if (botPacMan.getLastDirection() == PacManModel.Direction.UP) {
-                            newImage = this.botPacmanUpImage;
-                        } else if (botPacMan.getLastDirection() == PacManModel.Direction.DOWN) {
-                            newImage = this.botPacmanDownImage;
-                        }
-                    }
-                }
-
-                // Устанавливаем изображение только если оно изменилось
-                if (newImage != currentImage) {
+                // Установка изображения стены или точки
+                if (newImage != null) {
                     this.cellViews[row][column].setImage(newImage);
                 }
             }
+        }
+
+        // Обновление изображения Pac-Man
+        Point2D pacmanLocation = model.getPacman().getLocation();
+        int pacRow = (int) pacmanLocation.getX();
+        int pacCol = (int) pacmanLocation.getY();
+        PacManModel.Direction pacDirection = model.getCurrentDirection();
+
+        Image pacImage = switch (pacDirection) {
+            case RIGHT, NONE -> this.pacmanRightImage;
+            case LEFT -> this.pacmanLeftImage;
+            case UP -> this.pacmanUpImage;
+            case DOWN -> this.pacmanDownImage;
+        };
+
+        this.cellViews[pacRow][pacCol].setImage(pacImage);
+
+        // Обновление изображений привидений
+        for (Ghost ghost : model.getGhosts()) {
+            Point2D ghostLocation = ghost.getLocation();
+            int ghostRow = (int) ghostLocation.getX();
+            int ghostCol = (int) ghostLocation.getY();
+            Image ghostImage = ghost.getImage();
+            this.cellViews[ghostRow][ghostCol].setImage(ghostImage);
+        }
+
+        // Обновление изображений ботов Pac-Man
+        for (BotPacMan botPacMan : model.getBotPacMen()) {
+            Point2D botLocation = botPacMan.getLocation();
+            int botRow = (int) botLocation.getX();
+            int botCol = (int) botLocation.getY();
+            PacManModel.Direction botDirection = botPacMan.getLastDirection();
+
+            Image botImage = switch (botDirection) {
+                case RIGHT, NONE -> this.botPacmanRightImage;
+                case LEFT -> this.botPacmanLeftImage;
+                case UP -> this.botPacmanUpImage;
+                case DOWN -> this.botPacmanDownImage;
+            };
+
+            this.cellViews[botRow][botCol].setImage(botImage);
         }
     }
 
@@ -162,8 +180,10 @@ public class PacManView extends Group {
      * @param rowCount количество строк
      */
     public void setRowCount(int rowCount) {
-        this.rowCount = rowCount;
-        this.initializeGrid();
+        if (this.rowCount != rowCount) {
+            this.rowCount = rowCount;
+            initializeGrid();
+        }
     }
 
     /**
@@ -179,7 +199,9 @@ public class PacManView extends Group {
      * @param columnCount количество столбцов
      */
     public void setColumnCount(int columnCount) {
-        this.columnCount = columnCount;
-        this.initializeGrid();
+        if (this.columnCount != columnCount) {
+            this.columnCount = columnCount;
+            initializeGrid();
+        }
     }
 }
